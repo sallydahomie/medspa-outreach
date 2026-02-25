@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MedSpa Lead Pipeline — CRM Dashboard</title>
+<style>
+:root {
+  --bg: #0f0f13; --surface: #1a1a24; --surface2: #24243a;
+  --border: #2d2d44; --text: #e4e4f0; --muted: #8888a8;
+  --accent: #7c5cfc; --accent2: #a78bfa;
+  --green: #34d399; --yellow: #fbbf24; --orange: #fb923c; --red: #f87171; --blue: #60a5fa;
+  --radius: 10px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); min-height:100vh; }
+.app { max-width:1400px; margin:0 auto; padding:20px; }
+h1 { font-size:28px; font-weight:700; margin-bottom:4px; }
+h1 span { background:linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+.subtitle { color:var(--muted); font-size:14px; margin-bottom:24px; }
+
+/* Stats row */
+.stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; margin-bottom:24px; }
+.stat { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:16px; }
+.stat-label { font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px; }
+.stat-value { font-size:28px; font-weight:700; }
+.stat-value.green { color:var(--green); } .stat-value.yellow { color:var(--yellow); }
+.stat-value.orange { color:var(--orange); } .stat-value.blue { color:var(--blue); }
+.stat-value.accent { color:var(--accent2); }
+
+/* Toolbar */
+.toolbar { display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap; align-items:center; }
+.toolbar input, .toolbar select { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:8px 14px; color:var(--text); font-size:14px; outline:none; }
+.toolbar input:focus, .toolbar select:focus { border-color:var(--accent); }
+.toolbar input { flex:1; min-width:200px; }
+.btn { background:var(--accent); color:#fff; border:none; border-radius:8px; padding:8px 18px; font-size:14px; cursor:pointer; font-weight:600; transition:0.2s; }
+.btn:hover { opacity:0.85; }
+.btn-sm { padding:4px 10px; font-size:12px; border-radius:6px; }
+.btn-outline { background:transparent; border:1px solid var(--border); color:var(--text); }
+.btn-outline:hover { border-color:var(--accent); color:var(--accent2); }
+
+/* Table */
+.table-wrap { overflow-x:auto; border-radius:var(--radius); border:1px solid var(--border); }
+table { width:100%; border-collapse:collapse; font-size:13px; }
+th { background:var(--surface2); padding:10px 14px; text-align:left; font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:0.5px; color:var(--muted); position:sticky; top:0; }
+td { padding:10px 14px; border-top:1px solid var(--border); vertical-align:middle; }
+tr:hover td { background:var(--surface); }
+.handle { color:var(--accent2); }
+.followers { color:var(--muted); font-size:12px; }
+
+/* Status badges */
+.badge { display:inline-block; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.3px; }
+.badge-new { background:rgba(96,165,250,0.15); color:var(--blue); }
+.badge-sent { background:rgba(251,191,36,0.15); color:var(--yellow); }
+.badge-replied { background:rgba(52,211,153,0.15); color:var(--green); }
+.badge-meeting { background:rgba(124,92,252,0.15); color:var(--accent2); }
+.badge-closed { background:rgba(52,211,153,0.25); color:var(--green); }
+.badge-lost { background:rgba(248,113,113,0.15); color:var(--red); }
+.badge-followup { background:rgba(251,146,60,0.15); color:var(--orange); }
+
+/* Priority */
+.pri-high { color:var(--red); font-weight:600; }
+.pri-medium { color:var(--yellow); }
+.pri-low { color:var(--muted); }
+
+/* Score bar */
+.score-bar { width:60px; height:6px; background:var(--surface2); border-radius:3px; overflow:hidden; display:inline-block; vertical-align:middle; margin-right:6px; }
+.score-fill { height:100%; border-radius:3px; }
+
+/* Modal */
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.6); display:none; z-index:100; align-items:center; justify-content:center; }
+.modal-overlay.active { display:flex; }
+.modal { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:28px; width:90%; max-width:600px; max-height:90vh; overflow-y:auto; }
+.modal h2 { font-size:20px; margin-bottom:16px; }
+.modal label { display:block; font-size:12px; color:var(--muted); margin-bottom:4px; margin-top:12px; text-transform:uppercase; }
+.modal input, .modal select, .modal textarea { width:100%; background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:8px 12px; color:var(--text); font-size:14px; font-family:inherit; }
+.modal textarea { min-height:80px; resize:vertical; }
+.modal-actions { display:flex; gap:10px; margin-top:20px; justify-content:flex-end; }
+
+/* Follow-up panel */
+.followup-panel { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:20px; margin-top:24px; }
+.followup-panel h2 { font-size:18px; margin-bottom:12px; }
+.fu-item { display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid var(--border); }
+.fu-item:last-child { border-bottom:none; }
+.fu-days { font-size:22px; font-weight:700; min-width:50px; text-align:center; }
+.fu-days.overdue { color:var(--red); }
+.fu-days.today { color:var(--orange); }
+.fu-days.soon { color:var(--yellow); }
+.fu-info { flex:1; }
+.fu-name { font-weight:600; }
+.fu-meta { font-size:12px; color:var(--muted); }
+
+/* Timeline */
+.timeline { margin-top:12px; padding-left:16px; border-left:2px solid var(--border); }
+.tl-entry { padding:8px 0 8px 12px; position:relative; }
+.tl-entry::before { content:''; position:absolute; left:-21px; top:14px; width:8px; height:8px; border-radius:50%; background:var(--accent); }
+.tl-date { font-size:11px; color:var(--muted); }
+.tl-text { font-size:13px; margin-top:2px; }
+
+/* Import/Export */
+.io-section { margin-top:24px; display:flex; gap:10px; flex-wrap:wrap; }
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>🏥 <span>MedSpa Lead Pipeline</span></h1>
+  <p class="subtitle">CRM Dashboard — Track outreach, follow-ups, and conversions</p>
+
+  <div class="stats" id="stats"></div>
+
+  <div class="toolbar">
+    <input type="text" id="search" placeholder="Search leads...">
+    <select id="filterStatus">
+      <option value="">All Statuses</option>
+      <option value="new">New</option>
+      <option value="sent">DM Sent</option>
+      <option value="followup">Follow-Up</option>
+      <option value="replied">Replied</option>
+      <option value="meeting">Meeting Set</option>
+      <option value="closed">Closed Won</option>
+      <option value="lost">Lost</option>
+    </select>
+    <select id="filterPriority">
+      <option value="">All Priorities</option>
+      <option value="HIGH">High</option>
+      <option value="MEDIUM">Medium</option>
+      <option value="LOW">Low</option>
+    </select>
+    <button class="btn" onclick="openAddLead()">+ Add Lead</button>
+    <button class="btn btn-outline" onclick="exportData()">Export JSON</button>
+    <button class="btn btn-outline" onclick="document.getElementById('importFile').click()">Import</button>
+    <input type="file" id="importFile" accept=".json,.csv" style="display:none" onchange="importData(event)">
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Lead</th>
+          <th>Instagram</th>
+          <th>Status</th>
+          <th>Priority</th>
+          <th>Score</th>
+          <th>Last Contact</th>
+          <th>Next Follow-Up</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="leadTable"></tbody>
+    </table>
+  </div>
+
+  <div class="followup-panel" id="followupPanel">
+    <h2>📅 Upcoming Follow-Ups</h2>
+    <div id="followupList"></div>
+  </div>
+
+  <div class="io-section">
+    <button class="btn btn-outline" onclick="loadSampleCSV()">Load Sample Data (29 Leads)</button>
+    <button class="btn btn-outline" onclick="generateFollowUpReport()">📋 Copy Follow-Up Report</button>
+  </div>
+</div>
+
+<!-- Lead Detail/Edit Modal -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h2 id="modalTitle">Edit Lead</h2>
+    <input type="hidden" id="editIdx">
+    <label>Business Name</label><input id="fName">
+    <label>Instagram Handle</label><input id="fHandle">
+    <label>Followers</label><input id="fFollowers" type="number">
+    <label>Website</label><input id="fWebsite">
+    <label>Status</label>
+    <select id="fStatus">
+      <option value="new">New</option>
+      <option value="sent">DM Sent</option>
+      <option value="followup">Follow-Up Needed</option>
+      <option value="replied">Replied</option>
+      <option value="meeting">Meeting Set</option>
+      <option value="closed">Closed Won</option>
+      <option value="lost">Lost</option>
+    </select>
+    <label>Priority</label>
+    <select id="fPriority">
+      <option value="HIGH">High</option>
+      <option value="MEDIUM">Medium</option>
+      <option value="LOW">Low</option>
+    </select>
+    <label>Opportunity Score (1-10)</label><input id="fScore" type="number" min="1" max="10">
+    <label>Follow-Up Date</label><input id="fFollowUp" type="date">
+    <label>Notes</label><textarea id="fNotes"></textarea>
+    <label>Add Timeline Entry</label><textarea id="fNewTimeline" placeholder="What happened? (leave blank to skip)"></textarea>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+      <button class="btn" onclick="saveLead()">Save</button>
+    </div>
+    <div id="timelineSection"></div>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'medspa_crm_leads';
+let leads = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+
+const STATUS_META = {
+  new:      { label:'New', cls:'badge-new' },
+  sent:     { label:'DM Sent', cls:'badge-sent' },
+  followup: { label:'Follow-Up', cls:'badge-followup' },
+  replied:  { label:'Replied', cls:'badge-replied' },
+  meeting:  { label:'Meeting', cls:'badge-meeting' },
+  closed:   { label:'Closed Won', cls:'badge-closed' },
+  lost:     { label:'Lost', cls:'badge-lost' }
+};
+
+function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(leads)); }
+
+function render() {
+  const q = document.getElementById('search').value.toLowerCase();
+  const fs = document.getElementById('filterStatus').value;
+  const fp = document.getElementById('filterPriority').value;
+
+  let filtered = leads.filter(l => {
+    if (q && !l.name.toLowerCase().includes(q) && !l.handle.toLowerCase().includes(q)) return false;
+    if (fs && l.status !== fs) return false;
+    if (fp && l.priority !== fp) return false;
+    return true;
+  });
+
+  // Stats
+  const total = leads.length;
+  const byStatus = {};
+  leads.forEach(l => { byStatus[l.status] = (byStatus[l.status]||0) + 1; });
+  const pipeline = (byStatus.sent||0) + (byStatus.followup||0) + (byStatus.replied||0) + (byStatus.meeting||0);
+  const convRate = total > 0 ? ((byStatus.closed||0)/total*100).toFixed(1) : '0';
+  const needFollowUp = leads.filter(l => l.followUpDate && new Date(l.followUpDate) <= new Date(new Date().toDateString())).length;
+
+  document.getElementById('stats').innerHTML = `
+    <div class="stat"><div class="stat-label">Total Leads</div><div class="stat-value blue">${total}</div></div>
+    <div class="stat"><div class="stat-label">In Pipeline</div><div class="stat-value accent">${pipeline}</div></div>
+    <div class="stat"><div class="stat-label">DMs Sent</div><div class="stat-value yellow">${byStatus.sent||0}</div></div>
+    <div class="stat"><div class="stat-label">Replied</div><div class="stat-value green">${byStatus.replied||0}</div></div>
+    <div class="stat"><div class="stat-label">Meetings</div><div class="stat-value accent">${byStatus.meeting||0}</div></div>
+    <div class="stat"><div class="stat-label">Closed Won</div><div class="stat-value green">${byStatus.closed||0}</div></div>
+    <div class="stat"><div class="stat-label">Follow-Ups Due</div><div class="stat-value orange">${needFollowUp}</div></div>
+    <div class="stat"><div class="stat-label">Conv. Rate</div><div class="stat-value">${convRate}%</div></div>
+  `;
+
+  // Table
+  const tbody = document.getElementById('leadTable');
+  tbody.innerHTML = filtered.map((l, _i) => {
+    const i = leads.indexOf(l);
+    const sm = STATUS_META[l.status] || STATUS_META.new;
+    const priCls = l.priority === 'HIGH' ? 'pri-high' : l.priority === 'MEDIUM' ? 'pri-medium' : 'pri-low';
+    const scorePct = (l.score||5)/10*100;
+    const scoreColor = l.score >= 7 ? 'var(--green)' : l.score >= 5 ? 'var(--yellow)' : 'var(--red)';
+    const lastContact = l.lastContact ? daysSince(l.lastContact) + 'd ago' : '—';
+    const nextFU = l.followUpDate || '—';
+    return `<tr>
+      <td><strong>${l.name}</strong><br><span class="followers">${(l.followers||0).toLocaleString()} followers</span></td>
+      <td><span class="handle">${l.handle}</span></td>
+      <td><span class="badge ${sm.cls}">${sm.label}</span></td>
+      <td><span class="${priCls}">${l.priority}</span></td>
+      <td><span class="score-bar"><span class="score-fill" style="width:${scorePct}%;background:${scoreColor}"></span></span>${l.score||'—'}</td>
+      <td>${lastContact}</td>
+      <td>${nextFU}</td>
+      <td>
+        <button class="btn btn-sm btn-outline" onclick="editLead(${i})">Edit</button>
+        <button class="btn btn-sm btn-outline" onclick="quickStatus(${i})">⚡</button>
+      </td>
+    </tr>`;
+  }).join('');
+
+  // Follow-ups
+  renderFollowUps();
+}
+
+function daysSince(dateStr) {
+  const d = new Date(dateStr);
+  const now = new Date();
+  return Math.floor((now - d) / 86400000);
+}
+
+function renderFollowUps() {
+  const today = new Date(new Date().toDateString());
+  const upcoming = leads
+    .map((l, i) => ({ ...l, idx: i }))
+    .filter(l => l.followUpDate)
+    .sort((a, b) => new Date(a.followUpDate) - new Date(b.followUpDate))
+    .slice(0, 10);
+
+  document.getElementById('followupList').innerHTML = upcoming.length === 0
+    ? '<p style="color:var(--muted);padding:10px 0;">No follow-ups scheduled. Edit a lead to set one.</p>'
+    : upcoming.map(l => {
+      const fuDate = new Date(l.followUpDate);
+      const diff = Math.floor((fuDate - today) / 86400000);
+      const cls = diff < 0 ? 'overdue' : diff === 0 ? 'today' : 'soon';
+      const label = diff < 0 ? `${Math.abs(diff)}d overdue` : diff === 0 ? 'TODAY' : `in ${diff}d`;
+      return `<div class="fu-item">
+        <div class="fu-days ${cls}">${label}</div>
+        <div class="fu-info">
+          <div class="fu-name">${l.name}</div>
+          <div class="fu-meta">${l.handle} · ${STATUS_META[l.status]?.label||l.status} · ${l.followUpDate}</div>
+        </div>
+        <button class="btn btn-sm btn-outline" onclick="editLead(${l.idx})">Open</button>
+      </div>`;
+    }).join('');
+}
+
+function openAddLead() {
+  document.getElementById('editIdx').value = '-1';
+  document.getElementById('modalTitle').textContent = 'Add New Lead';
+  ['fName','fHandle','fWebsite','fNotes','fNewTimeline'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('fFollowers').value = '';
+  document.getElementById('fStatus').value = 'new';
+  document.getElementById('fPriority').value = 'HIGH';
+  document.getElementById('fScore').value = '7';
+  document.getElementById('fFollowUp').value = '';
+  document.getElementById('timelineSection').innerHTML = '';
+  document.getElementById('modal').classList.add('active');
+}
+
+function editLead(i) {
+  const l = leads[i];
+  document.getElementById('editIdx').value = i;
+  document.getElementById('modalTitle').textContent = l.name;
+  document.getElementById('fName').value = l.name;
+  document.getElementById('fHandle').value = l.handle;
+  document.getElementById('fFollowers').value = l.followers||'';
+  document.getElementById('fWebsite').value = l.website||'';
+  document.getElementById('fStatus').value = l.status;
+  document.getElementById('fPriority').value = l.priority;
+  document.getElementById('fScore').value = l.score||5;
+  document.getElementById('fFollowUp').value = l.followUpDate||'';
+  document.getElementById('fNotes').value = l.notes||'';
+  document.getElementById('fNewTimeline').value = '';
+
+  // Render timeline
+  const tl = l.timeline || [];
+  document.getElementById('timelineSection').innerHTML = tl.length ? '<label style="margin-top:16px;">Timeline</label><div class="timeline">' +
+    tl.map(e => `<div class="tl-entry"><div class="tl-date">${e.date}</div><div class="tl-text">${e.text}</div></div>`).join('') + '</div>' : '';
+
+  document.getElementById('modal').classList.add('active');
+}
+
+function closeModal() { document.getElementById('modal').classList.remove('active'); }
+
+function saveLead() {
+  const idx = parseInt(document.getElementById('editIdx').value);
+  const obj = {
+    name: document.getElementById('fName').value,
+    handle: document.getElementById('fHandle').value,
+    followers: parseInt(document.getElementById('fFollowers').value)||0,
+    website: document.getElementById('fWebsite').value,
+    status: document.getElementById('fStatus').value,
+    priority: document.getElementById('fPriority').value,
+    score: parseInt(document.getElementById('fScore').value)||5,
+    followUpDate: document.getElementById('fFollowUp').value || null,
+    notes: document.getElementById('fNotes').value,
+    lastContact: (idx >= 0 && leads[idx]) ? leads[idx].lastContact : new Date().toISOString().split('T')[0],
+    timeline: (idx >= 0 && leads[idx]) ? (leads[idx].timeline||[]) : []
+  };
+
+  const newEntry = document.getElementById('fNewTimeline').value.trim();
+  if (newEntry) {
+    obj.timeline.push({ date: new Date().toISOString().split('T')[0], text: newEntry });
+    obj.lastContact = new Date().toISOString().split('T')[0];
+  }
+
+  if (idx >= 0) leads[idx] = obj;
+  else leads.push(obj);
+
+  save(); render(); closeModal();
+}
+
+function quickStatus(i) {
+  const order = ['new','sent','followup','replied','meeting','closed'];
+  const cur = order.indexOf(leads[i].status);
+  const next = cur < order.length - 1 ? cur + 1 : cur;
+  leads[i].status = order[next];
+  leads[i].lastContact = new Date().toISOString().split('T')[0];
+  if (!leads[i].timeline) leads[i].timeline = [];
+  leads[i].timeline.push({ date: new Date().toISOString().split('T')[0], text: `Status → ${STATUS_META[order[next]].label}` });
+
+  // Auto-set follow-up 3 days out for sent/followup
+  if (['sent','followup'].includes(order[next])) {
+    const fu = new Date(); fu.setDate(fu.getDate() + 3);
+    leads[i].followUpDate = fu.toISOString().split('T')[0];
+  }
+
+  save(); render();
+}
+
+function exportData() {
+  const blob = new Blob([JSON.stringify(leads, null, 2)], { type:'application/json' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = `medspa_pipeline_${new Date().toISOString().split('T')[0]}.json`;
+  a.click();
+}
+
+function importData(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    try {
+      if (file.name.endsWith('.json')) {
+        const data = JSON.parse(ev.target.result);
+        if (Array.isArray(data)) { leads = data; save(); render(); alert(`Imported ${data.length} leads`); }
+      } else if (file.name.endsWith('.csv')) {
+        importCSV(ev.target.result);
+      }
+    } catch(err) { alert('Import failed: ' + err.message); }
+  };
+  reader.readAsText(file);
+}
+
+function importCSV(text) {
+  const lines = text.split('\n').filter(l => l.trim());
+  if (lines.length < 2) return;
+  // Parse CSV properly handling quoted fields
+  function parseCSVLine(line) {
+    const result = []; let current = ''; let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+      if (line[i] === '"') { inQuotes = !inQuotes; }
+      else if (line[i] === ',' && !inQuotes) { result.push(current.trim()); current = ''; }
+      else { current += line[i]; }
+    }
+    result.push(current.trim());
+    return result;
+  }
+  const headers = parseCSVLine(lines[0]);
+  const nameIdx = headers.indexOf('Name');
+  const handleIdx = headers.indexOf('Instagram_Handle');
+  const followersIdx = headers.indexOf('Followers');
+  const websiteIdx = headers.indexOf('Website_URL');
+  const scoreIdx = headers.indexOf('Opportunity_Score');
+  const priIdx = headers.indexOf('Priority');
+  const notesIdx = headers.indexOf('Notes');
+
+  const newLeads = [];
+  for (let i = 1; i < lines.length; i++) {
+    const cols = parseCSVLine(lines[i]);
+    if (!cols[nameIdx]) continue;
+    const existing = leads.find(l => l.handle === cols[handleIdx]);
+    if (existing) continue; // skip dupes
+    newLeads.push({
+      name: cols[nameIdx] || '',
+      handle: cols[handleIdx] || '',
+      followers: parseInt(cols[followersIdx]) || 0,
+      website: cols[websiteIdx] || '',
+      status: 'new',
+      priority: cols[priIdx] || 'MEDIUM',
+      score: parseFloat(cols[scoreIdx]) || 5,
+      followUpDate: null,
+      lastContact: null,
+      notes: cols[notesIdx] || '',
+      timeline: [{ date: new Date().toISOString().split('T')[0], text: 'Imported from CSV' }]
+    });
+  }
+  leads = leads.concat(newLeads);
+  save(); render();
+  alert(`Imported ${newLeads.length} new leads (${leads.length} total)`);
+}
+
+function loadSampleCSV() {
+  fetch('leads_seed.json').then(r=>r.json()).then(data => {
+    if (leads.length > 0 && !confirm('This will replace your current data. Continue?')) return;
+    leads = data; save(); render();
+  }).catch(() => {
+    // Fallback: load from embedded data
+    if (leads.length > 0 && !confirm('Load 29 sample leads from Trevor\'s research? This replaces current data.')) return;
+    leads = SAMPLE_LEADS; save(); render();
+  });
+}
+
+function generateFollowUpReport() {
+  const today = new Date(new Date().toDateString());
+  const due = leads.filter(l => l.followUpDate && new Date(l.followUpDate) <= today);
+  const sent = leads.filter(l => l.status === 'sent');
+  let report = `📋 FOLLOW-UP REPORT — ${new Date().toLocaleDateString()}\n\n`;
+  report += `Overdue follow-ups: ${due.length}\n`;
+  report += `Awaiting reply: ${sent.length}\n\n`;
+  due.forEach(l => { report += `⚠️ ${l.name} (${l.handle}) — due ${l.followUpDate}\n`; });
+  if (sent.length) { report += `\nDMs sent, no reply yet:\n`; sent.forEach(l => { report += `  • ${l.name} (${l.handle})\n`; }); }
+  navigator.clipboard.writeText(report).then(() => alert('Report copied to clipboard!')).catch(() => {
+    prompt('Copy this report:', report);
+  });
+}
+
+// Embedded sample data from Trevor's CSV
+const SAMPLE_LEADS = [
+  {name:"Pure Bliss Med Spa",handle:"@pureblissmedspa",followers:40000,website:"https://www.pureblissmedspa.com/",status:"sent",priority:"HIGH",score:9,followUpDate:"2026-02-27",lastContact:"2026-02-24",notes:"Atlanta powerhouse. 40K followers. Website needs punch.",timeline:[{date:"2026-02-24",text:"DM sent — Batch 1"},{date:"2026-02-24",text:"Status → DM Sent"}]},
+  {name:"Ecobel Atlanta",handle:"@ecobelmedspa",followers:21000,website:"https://ecobelmedspa.com/",status:"sent",priority:"HIGH",score:8,followUpDate:"2026-02-27",lastContact:"2026-02-24",notes:"Boutique positioning. 21K followers. Bio: natural, undetectable results.",timeline:[{date:"2026-02-24",text:"DM sent — Batch 1"},{date:"2026-02-24",text:"Status → DM Sent"}]},
+  {name:"Glow Med Spa NYC",handle:"@glamglowmedspa",followers:26000,website:"https://glamglowmedspa.com/",status:"sent",priority:"HIGH",score:7.5,followUpDate:"2026-02-27",lastContact:"2026-02-24",notes:"NYC market. 'Kindest Staff' claim is weak — needs RESULTS focus.",timeline:[{date:"2026-02-24",text:"DM sent"},{date:"2026-02-24",text:"Status → DM Sent"}]},
+  {name:"Cheeky Denver",handle:"@cheekydenver",followers:15000,website:"https://cheekydendermedspa.com/",status:"sent",priority:"MEDIUM",score:7,followUpDate:"2026-02-27",lastContact:"2026-02-24",notes:"Strong brand personality. Playful but needs harder selling.",timeline:[{date:"2026-02-24",text:"DM sent"},{date:"2026-02-24",text:"Status → DM Sent"}]},
+  {name:"RESTOR Denver",handle:"@restormedicalspa",followers:15000,website:"https://restormedicalspa.com/",status:"sent",priority:"MEDIUM",score:6.5,followUpDate:"2026-02-27",lastContact:"2026-02-24",notes:"Solid follower base. 'Restor' creates good positioning.",timeline:[{date:"2026-02-24",text:"DM sent"},{date:"2026-02-24",text:"Status → DM Sent"}]},
+  {name:"VIO Med Spa National",handle:"@viomedspa",followers:13000,website:"https://viomedspa.com/",status:"sent",priority:"MEDIUM",score:6,followUpDate:"2026-02-27",lastContact:"2026-02-24",notes:"60+ locations. 13K followers for national brand = opportunity gap.",timeline:[{date:"2026-02-24",text:"DM sent"},{date:"2026-02-24",text:"Status → DM Sent"}]},
+  {name:"Novopelle Dallas",handle:"@novopelle",followers:14000,website:"https://novopelle.com/",status:"sent",priority:"MEDIUM",score:6.5,followUpDate:"2026-02-27",lastContact:"2026-02-24",notes:"Dallas market. Name is catchy but website unclear on services.",timeline:[{date:"2026-02-24",text:"DM sent"},{date:"2026-02-24",text:"Status → DM Sent"}]},
+  {name:"Avana Wellness Miami",handle:"@avana_wellness",followers:76000,website:"https://avanawellnessplus.com/",status:"sent",priority:"MEDIUM",score:7,followUpDate:"2026-02-27",lastContact:"2026-02-24",notes:"76K followers. Miami. Copy needs more punch.",timeline:[{date:"2026-02-24",text:"DM sent"},{date:"2026-02-24",text:"Status → DM Sent"}]},
+  {name:"BeautyFix MedSpa NYC",handle:"@beautyfixmedspa",followers:147000,website:"https://getbeautyfix.com/",status:"sent",priority:"MEDIUM",score:6,followUpDate:"2026-02-27",lastContact:"2026-02-24",notes:"147K followers. Multi-location. Lacks emotional connection.",timeline:[{date:"2026-02-24",text:"DM sent"},{date:"2026-02-24",text:"Status → DM Sent"}]},
+  {name:"Refresh Medical Spa KC",handle:"@refreshmedspa",followers:4300,website:"https://refreshmedspaonline.com/",status:"sent",priority:"HIGH",score:7,followUpDate:"2026-02-27",lastContact:"2026-02-24",notes:"'Best Med Spa 2025'. 4.3K = ideal target size.",timeline:[{date:"2026-02-24",text:"DM sent"},{date:"2026-02-24",text:"Status → DM Sent"}]},
+  {name:"HL Med Spa NJ",handle:"@hlmedspa.official",followers:16000,website:"https://hlmedspa.com/",status:"new",priority:"MEDIUM",score:6.5,notes:"16K followers. 3 NJ/NYC locations.",timeline:[]},
+  {name:"DVIDA Chicago",handle:"@dvidamedspa_chicago",followers:6277,website:"https://dvidamedspa.com/",status:"new",priority:"MEDIUM",score:6.5,notes:"Hair Restoration + HRT differentiator.",timeline:[]},
+  {name:"Miami Lakes Med Spa",handle:"@miamilakesmedspa",followers:8921,website:"https://miamilakesmedspa.com/",status:"new",priority:"MEDIUM",score:7,notes:"Miami. 'Premier Med Spa' positioning.",timeline:[]},
+  {name:"The Med Spa Boutique SD",handle:"@themedspaboutique",followers:11000,website:"https://themedspaboutique.com/",status:"new",priority:"MEDIUM",score:6.5,notes:"San Diego. 'Boutique' positioning is good.",timeline:[]},
+  {name:"Ovation Med Spa Houston",handle:"@ovationmedspa",followers:9828,website:"https://ovationmedspa.com/",status:"new",priority:"HIGH",score:7,notes:"'Best Med Spa for 5 years'. Strong positioning.",timeline:[]},
+  {name:"Bella Santé Boston",handle:"@bellasantespas",followers:8000,website:"https://bellasantespas.com/",status:"new",priority:"MEDIUM",score:6,notes:"30 year heritage. Needs modernization.",timeline:[]},
+  {name:"Skin Spa by Dr. Kia LA",handle:"@drkiashakib",followers:29000,website:"https://skinspabydrkia.com/",status:"new",priority:"MEDIUM",score:7,notes:"Doctor credibility. 29K followers.",timeline:[]},
+  {name:"Spoke Med Spa Atlanta",handle:"@spokenmedspa",followers:3729,website:"https://spokenmedspa.com/",status:"new",priority:"MEDIUM",score:6.5,notes:"Atlanta. 3.7K followers. Award positioning.",timeline:[]},
+  {name:"SOM Aesthetics SD",handle:"@som.aesthetics",followers:8065,website:"https://somaesthetics.com/",status:"new",priority:"MEDIUM",score:6,notes:"'Science Meets Artistry'. Cosmetic Dermatologist.",timeline:[]},
+  {name:"Fancy Beauty Med Spa LA",handle:"@fancybeautymedspa",followers:6660,website:"https://fancybeautymedspa.com/",status:"new",priority:"MEDIUM",score:6.5,notes:"LA. 6.7K followers.",timeline:[]},
+  {name:"Magical Med Spa Miami",handle:"@magicalmedspa_",followers:4205,website:"https://magicalmedspa.com/",status:"sent",priority:"MEDIUM",score:6.5,followUpDate:"2026-02-27",lastContact:"2026-02-24",notes:"Spanish/English niche. Miami.",timeline:[{date:"2026-02-24",text:"DM sent — Batch 3"}]},
+  {name:"Trifecta Med Spa NYC",handle:"@trifectamedspa",followers:7904,website:"https://trifectamedspa.com/",status:"sent",priority:"MEDIUM",score:6.5,followUpDate:"2026-02-27",lastContact:"2026-02-24",notes:"14 years. 3,191 posts. Posting frequency is elite.",timeline:[{date:"2026-02-24",text:"DM sent — Batch 3"}]},
+  {name:"TREAT MedSpa NYC",handle:"@treatmedspaofficial",followers:5331,website:"https://treatmedspa.com/",status:"sent",priority:"MEDIUM",score:6,followUpDate:"2026-02-27",lastContact:"2026-02-24",notes:"NoMad. Sofwave, CoolSculpting Elite.",timeline:[{date:"2026-02-24",text:"DM sent — Batch 3"}]},
+  {name:"Best You MedSpa Boston",handle:"@bestyoumedspa",followers:22000,website:"https://bestyoumedspa.com/",status:"sent",priority:"HIGH",score:7,followUpDate:"2026-02-27",lastContact:"2026-02-24",notes:"22K followers. 'Advanced Aesthetic Injectors'.",timeline:[{date:"2026-02-24",text:"DM sent — Batch 3"}]},
+  {name:"Glow Medispa Seattle",handle:"@glow.medispa",followers:2106,website:"https://glowmedispa.com/",status:"new",priority:"MEDIUM",score:6.5,notes:"Seattle/Kirkland. Award positioning.",timeline:[]},
+  {name:"BHRC Houston",handle:"@bhrchouston",followers:7340,website:"https://bhrchouston.com/",status:"new",priority:"MEDIUM",score:6.5,notes:"Houston. 1,378 posts. Excellent frequency.",timeline:[]},
+  {name:"Rejuve LA",handle:"@rejuveclinics",followers:12000,website:"https://rejuvelaclinics.com/",status:"new",priority:"LOW",score:5.5,notes:"12K followers but only 103 posts. MAJOR GAP.",timeline:[]},
+  {name:"VIO Boston",handle:"@viomedspa_boston",followers:2941,website:"https://viomedspa.com/boston",status:"new",priority:"MEDIUM",score:5.5,notes:"Boston VIO chain location. 2.9K followers.",timeline:[]},
+  {name:"Angel Face Injections",handle:"@angelfaceinjections",followers:2735,website:"https://angelfaceinjections.com/",status:"new",priority:"MEDIUM",score:6,notes:"Boston. Niche focus on lips.",timeline:[]}
+];
+
+// Init
+document.getElementById('search').addEventListener('input', render);
+document.getElementById('filterStatus').addEventListener('change', render);
+document.getElementById('filterPriority').addEventListener('change', render);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+// Load sample data on first visit
+if (leads.length === 0) { leads = SAMPLE_LEADS; save(); }
+render();
+</script>
+</body>
+</html>
