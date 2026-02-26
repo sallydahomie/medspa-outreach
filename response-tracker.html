@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DM Response Tracker — MedSpa Outreach</title>
+<style>
+:root {
+  --bg:#0f0f13; --surface:#1a1a24; --surface2:#24243a; --border:#2d2d44;
+  --text:#e4e4f0; --muted:#8888a8;
+  --accent:#7c5cfc; --accent2:#a78bfa;
+  --green:#34d399; --yellow:#fbbf24; --orange:#fb923c; --red:#f87171; --blue:#60a5fa;
+  --radius:10px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+.app{max-width:1200px;margin:0 auto;padding:20px;}
+h1{font-size:24px;font-weight:700;margin-bottom:4px;}
+h1 span{background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.sub{color:var(--muted);font-size:13px;margin-bottom:20px;}
+
+/* Stats */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:20px;}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;text-align:center;}
+.stat .num{font-size:28px;font-weight:800;}
+.stat .label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;}
+.stat .num.green{color:var(--green);}.stat .num.yellow{color:var(--yellow);}
+.stat .num.orange{color:var(--orange);}.stat .num.red{color:var(--red);}
+.stat .num.blue{color:var(--blue);}.stat .num.accent{color:var(--accent2);}
+
+/* Funnel */
+.funnel{display:flex;gap:4px;margin-bottom:20px;height:36px;border-radius:8px;overflow:hidden;}
+.funnel-seg{display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#fff;transition:flex 0.3s;}
+
+/* Controls */
+.controls{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center;}
+.controls select,.controls input{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:8px;font-size:13px;}
+.controls input{flex:1;min-width:200px;}
+.btn{background:var(--accent);color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-weight:600;font-size:13px;}
+.btn:hover{background:#6d4de6;}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--muted);}
+.btn-outline:hover{border-color:var(--accent);color:var(--text);}
+
+/* Table */
+table{width:100%;border-collapse:collapse;font-size:13px;}
+thead th{background:var(--surface);padding:10px 12px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);position:sticky;top:0;border-bottom:1px solid var(--border);}
+tbody tr{border-bottom:1px solid var(--border);transition:background 0.15s;}
+tbody tr:hover{background:var(--surface);}
+td{padding:10px 12px;vertical-align:top;}
+.handle{color:var(--accent2);font-weight:600;}
+.badge{display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;}
+.badge-none{background:#1f1f35;color:var(--muted);}
+.badge-replied{background:#0d3320;color:var(--green);}
+.badge-interested{background:#1a3010;color:#86efac;}
+.badge-meeting{background:#0c2d4a;color:var(--blue);}
+.badge-declined{background:#3b1515;color:var(--red);}
+.badge-ghosted{background:#2a2015;color:var(--orange);}
+
+/* Log response modal */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:100;align-items:center;justify-content:center;}
+.modal-bg.open{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;width:90%;max-width:500px;}
+.modal h3{font-size:18px;margin-bottom:16px;}
+.modal label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px;margin-top:12px;}
+.modal select,.modal input,.modal textarea{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:8px;font-size:13px;font-family:inherit;}
+.modal textarea{height:80px;resize:vertical;}
+.modal-actions{display:flex;gap:10px;margin-top:20px;justify-content:flex-end;}
+
+/* Timeline */
+.timeline{font-size:12px;color:var(--muted);}
+.timeline-entry{padding:4px 0;border-left:2px solid var(--border);padding-left:10px;margin-left:4px;}
+.timeline-entry .date{color:var(--accent2);font-weight:600;}
+
+/* Responsive */
+.table-wrap{overflow-x:auto;}
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>📩 <span>DM Response Tracker</span></h1>
+  <p class="sub">Track outreach responses, log interactions, monitor your pipeline conversion.</p>
+
+  <div class="stats" id="stats"></div>
+  <div class="funnel" id="funnel"></div>
+
+  <div class="controls">
+    <select id="filterStatus"><option value="">All Statuses</option><option value="No Response">No Response</option><option value="Replied">Replied</option><option value="Interested">Interested</option><option value="Meeting Set">Meeting Set</option><option value="Declined">Declined</option><option value="Ghosted">Ghosted</option></select>
+    <input type="text" id="search" placeholder="Search by name or handle...">
+    <button class="btn" onclick="openAddModal()">+ Log Response</button>
+    <button class="btn btn-outline" onclick="exportData()">Export CSV</button>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Lead</th><th>Handle</th><th>DM Sent</th><th>Status</th><th>Last Contact</th><th>Response Time</th><th>Notes</th><th>Actions</th></tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-bg" id="modal">
+  <div class="modal">
+    <h3 id="modalTitle">Log Response</h3>
+    <label>Lead</label>
+    <select id="mLead"></select>
+    <label>Status</label>
+    <select id="mStatus">
+      <option>No Response</option><option>Replied</option><option>Interested</option>
+      <option>Meeting Set</option><option>Declined</option><option>Ghosted</option>
+    </select>
+    <label>Response Date</label>
+    <input type="date" id="mDate">
+    <label>Notes</label>
+    <textarea id="mNotes" placeholder="What did they say? Any follow-up needed?"></textarea>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+      <button class="btn" onclick="saveResponse()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Pre-loaded leads from Trevor's CSV
+const LEADS = [
+  {id:1,name:"Pure Bliss Med Spa",handle:"@pureblissmedspa",followers:"40K",city:"Atlanta",priority:"HIGH",dmSent:"2026-02-23",status:"No Response",responses:[]},
+  {id:2,name:"Ecobel Atlanta",handle:"@ecobelmedspa",followers:"21K",city:"Atlanta",priority:"HIGH",dmSent:"2026-02-23",status:"No Response",responses:[]},
+  {id:3,name:"Glow Med Spa NYC",handle:"@glamglowmedspa",followers:"26K",city:"NYC",priority:"HIGH",dmSent:"2026-02-23",status:"No Response",responses:[]},
+  {id:4,name:"Cheeky Denver",handle:"@cheekydenver",followers:"15K",city:"Denver",priority:"MEDIUM",dmSent:"2026-02-23",status:"No Response",responses:[]},
+  {id:5,name:"RESTOR Denver",handle:"@restormedicalspa",followers:"15K",city:"Denver",priority:"MEDIUM",dmSent:"2026-02-23",status:"No Response",responses:[]},
+  {id:6,name:"VIO Med Spa",handle:"@viomedspa",followers:"13K",city:"National",priority:"MEDIUM",dmSent:"2026-02-23",status:"No Response",responses:[]},
+  {id:7,name:"Novopelle Dallas",handle:"@novopelle",followers:"14K",city:"Dallas",priority:"MEDIUM",dmSent:"2026-02-23",status:"No Response",responses:[]},
+  {id:8,name:"Avana Wellness Miami",handle:"@avana_wellness",followers:"76K",city:"Miami",priority:"MEDIUM",dmSent:"2026-02-23",status:"No Response",responses:[]},
+  {id:9,name:"BeautyFix MedSpa",handle:"@beautyfixmedspa",followers:"147K",city:"NYC",priority:"MEDIUM",dmSent:"2026-02-23",status:"No Response",responses:[]},
+  {id:10,name:"Refresh Medical Spa",handle:"@refreshmedspa",followers:"4.3K",city:"Kansas City",priority:"HIGH",dmSent:"2026-02-24",status:"No Response",responses:[]},
+  {id:11,name:"HL Med Spa NJ",handle:"@hlmedspa.official",followers:"16K",city:"New Jersey",priority:"MEDIUM",dmSent:"2026-02-24",status:"No Response",responses:[]},
+  {id:12,name:"DVIDA Chicago",handle:"@dvidamedspa_chicago",followers:"6.3K",city:"Chicago",priority:"MEDIUM",dmSent:"2026-02-24",status:"No Response",responses:[]},
+  {id:13,name:"Miami Lakes Med Spa",handle:"@miamilakesmedspa",followers:"8.9K",city:"Miami",priority:"MEDIUM",dmSent:"2026-02-24",status:"No Response",responses:[]},
+  {id:14,name:"The Med Spa Boutique",handle:"@themedspaboutique",followers:"11K",city:"San Diego",priority:"MEDIUM",dmSent:"2026-02-24",status:"No Response",responses:[]},
+  {id:15,name:"Ovation Med Spa",handle:"@ovationmedspa",followers:"9.8K",city:"Houston",priority:"HIGH",dmSent:"2026-02-24",status:"No Response",responses:[]},
+  {id:16,name:"Bella Santé Boston",handle:"@bellasantespas",followers:"8K",city:"Boston",priority:"MEDIUM",dmSent:"2026-02-24",status:"No Response",responses:[]},
+  {id:17,name:"Skin Spa by Dr. Kia",handle:"@drkiashakib",followers:"29K",city:"LA",priority:"MEDIUM",dmSent:"2026-02-24",status:"No Response",responses:[]},
+  {id:18,name:"Spoke Med Spa",handle:"@spokenmedspa",followers:"3.7K",city:"Atlanta",priority:"MEDIUM",dmSent:"2026-02-24",status:"No Response",responses:[]},
+  {id:19,name:"SOM Aesthetics",handle:"@som.aesthetics",followers:"8K",city:"San Diego",priority:"MEDIUM",dmSent:"2026-02-24",status:"No Response",responses:[]}
+];
+
+let leads = JSON.parse(localStorage.getItem('medspa_responses') || 'null') || LEADS;
+
+function save(){ localStorage.setItem('medspa_responses', JSON.stringify(leads)); }
+
+function statusClass(s){
+  const map = {'No Response':'none','Replied':'replied','Interested':'interested','Meeting Set':'meeting','Declined':'declined','Ghosted':'ghosted'};
+  return 'badge-' + (map[s]||'none');
+}
+
+function daysSince(d){ return Math.floor((Date.now()-new Date(d+'T12:00:00'))/(86400000)); }
+
+function renderStats(){
+  const total = leads.length;
+  const counts = {};
+  leads.forEach(l => counts[l.status] = (counts[l.status]||0)+1);
+  const replied = total - (counts['No Response']||0);
+  const rate = total ? Math.round(replied/total*100) : 0;
+
+  document.getElementById('stats').innerHTML = `
+    <div class="stat"><div class="num accent">${total}</div><div class="label">Total DMs Sent</div></div>
+    <div class="stat"><div class="num green">${replied}</div><div class="label">Responded</div></div>
+    <div class="stat"><div class="num blue">${counts['Meeting Set']||0}</div><div class="label">Meetings Set</div></div>
+    <div class="stat"><div class="num yellow">${counts['Interested']||0}</div><div class="label">Interested</div></div>
+    <div class="stat"><div class="num orange">${counts['Ghosted']||0}</div><div class="label">Ghosted</div></div>
+    <div class="stat"><div class="num red">${counts['Declined']||0}</div><div class="label">Declined</div></div>
+    <div class="stat"><div class="num" style="color:var(--text)">${rate}%</div><div class="label">Response Rate</div></div>
+  `;
+
+  // Funnel
+  const colors = {'No Response':'#4a4a6a','Replied':'#34d399','Interested':'#86efac','Meeting Set':'#60a5fa','Declined':'#f87171','Ghosted':'#fb923c'};
+  let html = '';
+  for(const [status,count] of Object.entries(counts)){
+    if(count>0) html += `<div class="funnel-seg" style="flex:${count};background:${colors[status]||'#4a4a6a'}" title="${status}: ${count}">${count > 1 ? status : ''}</div>`;
+  }
+  document.getElementById('funnel').innerHTML = html;
+}
+
+function renderTable(){
+  const filter = document.getElementById('filterStatus').value;
+  const search = document.getElementById('search').value.toLowerCase();
+  const filtered = leads.filter(l => {
+    if(filter && l.status !== filter) return false;
+    if(search && !l.name.toLowerCase().includes(search) && !l.handle.toLowerCase().includes(search)) return false;
+    return true;
+  });
+
+  document.getElementById('tbody').innerHTML = filtered.map(l => {
+    const days = daysSince(l.dmSent);
+    const lastContact = l.responses.length ? l.responses[l.responses.length-1].date : l.dmSent;
+    const respTime = l.responses.length ? daysSince(l.dmSent) - daysSince(l.responses[0].date) + 'd' : '—';
+    const lastNote = l.responses.length ? l.responses[l.responses.length-1].notes.substring(0,50) : '';
+    return `<tr>
+      <td><strong>${l.name}</strong><br><span style="color:var(--muted);font-size:11px">${l.city} · ${l.followers}</span></td>
+      <td class="handle">${l.handle}</td>
+      <td>${l.dmSent}<br><span style="color:var(--muted);font-size:11px">${days}d ago</span></td>
+      <td><span class="badge ${statusClass(l.status)}">${l.status}</span></td>
+      <td>${lastContact}</td>
+      <td>${respTime}</td>
+      <td style="max-width:150px;color:var(--muted);font-size:12px">${lastNote}${lastNote.length>=50?'...':''}</td>
+      <td><button class="btn" style="padding:4px 10px;font-size:11px" onclick="openLogModal(${l.id})">Log</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function render(){ renderStats(); renderTable(); }
+
+document.getElementById('filterStatus').onchange = render;
+document.getElementById('search').oninput = render;
+
+function openAddModal(){ openLogModal(leads[0]?.id); }
+function openLogModal(id){
+  const sel = document.getElementById('mLead');
+  sel.innerHTML = leads.map(l => `<option value="${l.id}" ${l.id===id?'selected':''}>${l.name} (${l.handle})</option>`).join('');
+  document.getElementById('mDate').value = new Date().toISOString().split('T')[0];
+  document.getElementById('mNotes').value = '';
+  const lead = leads.find(l=>l.id===id);
+  if(lead) document.getElementById('mStatus').value = lead.status === 'No Response' ? 'Replied' : lead.status;
+  document.getElementById('modal').classList.add('open');
+}
+function closeModal(){ document.getElementById('modal').classList.remove('open'); }
+
+function saveResponse(){
+  const id = parseInt(document.getElementById('mLead').value);
+  const lead = leads.find(l=>l.id===id);
+  if(!lead) return;
+  lead.status = document.getElementById('mStatus').value;
+  lead.responses.push({
+    date: document.getElementById('mDate').value,
+    status: lead.status,
+    notes: document.getElementById('mNotes').value
+  });
+  save(); render(); closeModal();
+}
+
+function exportData(){
+  const rows = [['Name','Handle','City','DM Sent','Status','Responses','Last Note']];
+  leads.forEach(l => {
+    const lastNote = l.responses.length ? l.responses[l.responses.length-1].notes : '';
+    rows.push([l.name,l.handle,l.city,l.dmSent,l.status,l.responses.length,lastNote]);
+  });
+  const csv = rows.map(r=>r.map(c=>`"${c}"`).join(',')).join('\n');
+  const blob = new Blob([csv],{type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'medspa_responses_' + new Date().toISOString().split('T')[0] + '.csv';
+  a.click();
+}
+
+render();
+</script>
+</body>
+</html>

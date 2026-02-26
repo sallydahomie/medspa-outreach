@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI-Powered Growth for Med Spas — Book More Appointments on Autopilot</title>
+<meta name="description" content="Med spas using our AI systems book 3x more appointments, respond to inquiries in under 60 seconds, and never miss a follow-up. See how it works.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #fafafa; --white: #ffffff; --text: #1a1a2e; --muted: #6b7280;
+  --accent: #7c3aed; --accent-light: #a78bfa; --accent-bg: #f3f0ff;
+  --green: #059669; --green-bg: #ecfdf5;
+  --gradient: linear-gradient(135deg, #7c3aed, #a78bfa, #c084fc);
+  --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.04);
+  --shadow-lg: 0 4px 20px rgba(124,58,237,0.15);
+  --radius: 12px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior: smooth; }
+body { font-family: 'Inter', -apple-system, sans-serif; color: var(--text); background: var(--bg); line-height: 1.6; }
+
+/* NAV */
+nav { position:fixed; top:0; left:0; right:0; background:rgba(255,255,255,0.95); backdrop-filter:blur(12px); z-index:100; border-bottom:1px solid #e5e7eb; }
+.nav-inner { max-width:1100px; margin:0 auto; padding:16px 24px; display:flex; align-items:center; justify-content:space-between; }
+.nav-logo { font-weight:800; font-size:20px; color:var(--accent); }
+.nav-cta { background:var(--accent); color:#fff; padding:10px 24px; border-radius:8px; text-decoration:none; font-weight:600; font-size:14px; transition:all 0.2s; }
+.nav-cta:hover { background:#6d28d9; transform:translateY(-1px); box-shadow:var(--shadow-lg); }
+
+/* HERO */
+.hero { padding:140px 24px 80px; text-align:center; max-width:900px; margin:0 auto; }
+.hero-badge { display:inline-block; background:var(--accent-bg); color:var(--accent); padding:6px 16px; border-radius:20px; font-size:13px; font-weight:600; margin-bottom:24px; }
+.hero h1 { font-size:clamp(32px, 5vw, 56px); font-weight:800; line-height:1.1; margin-bottom:20px; }
+.hero h1 .highlight { background:var(--gradient); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+.hero p { font-size:18px; color:var(--muted); max-width:640px; margin:0 auto 32px; line-height:1.7; }
+.hero-cta { display:inline-flex; align-items:center; gap:8px; background:var(--accent); color:#fff; padding:16px 36px; border-radius:10px; text-decoration:none; font-weight:700; font-size:17px; transition:all 0.2s; box-shadow:var(--shadow-lg); }
+.hero-cta:hover { background:#6d28d9; transform:translateY(-2px); }
+.hero-sub { margin-top:12px; font-size:13px; color:var(--muted); }
+
+/* SOCIAL PROOF BAR */
+.proof-bar { background:var(--white); border-top:1px solid #e5e7eb; border-bottom:1px solid #e5e7eb; padding:24px; text-align:center; }
+.proof-bar p { color:var(--muted); font-size:14px; font-weight:500; }
+.proof-stats { display:flex; justify-content:center; gap:48px; margin-top:12px; flex-wrap:wrap; }
+.proof-stat { text-align:center; }
+.proof-stat .num { font-size:28px; font-weight:800; color:var(--accent); }
+.proof-stat .label { font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; }
+
+/* SECTIONS */
+.section { padding:80px 24px; max-width:1100px; margin:0 auto; }
+.section-label { font-size:13px; font-weight:700; color:var(--accent); text-transform:uppercase; letter-spacing:1px; margin-bottom:8px; }
+.section h2 { font-size:clamp(24px, 3.5vw, 40px); font-weight:800; margin-bottom:16px; line-height:1.2; }
+.section .desc { color:var(--muted); font-size:16px; max-width:600px; margin-bottom:40px; }
+
+/* PROBLEM */
+.problems { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:20px; }
+.problem-card { background:var(--white); border:1px solid #e5e7eb; border-radius:var(--radius); padding:28px; }
+.problem-card .icon { font-size:32px; margin-bottom:12px; }
+.problem-card h3 { font-size:18px; font-weight:700; margin-bottom:8px; }
+.problem-card p { color:var(--muted); font-size:14px; }
+
+/* HOW IT WORKS */
+.steps { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:24px; counter-reset:step; }
+.step { background:var(--white); border:1px solid #e5e7eb; border-radius:var(--radius); padding:32px 28px; position:relative; }
+.step::before { counter-increment:step; content:counter(step); position:absolute; top:16px; right:20px; font-size:48px; font-weight:800; color:#f3f0ff; }
+.step h3 { font-size:18px; font-weight:700; margin-bottom:8px; color:var(--accent); }
+.step p { color:var(--muted); font-size:14px; }
+
+/* SERVICES */
+.services { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:20px; }
+.service-card { background:var(--white); border:1px solid #e5e7eb; border-radius:var(--radius); padding:32px; transition:all 0.2s; }
+.service-card:hover { border-color:var(--accent-light); box-shadow:var(--shadow-lg); transform:translateY(-2px); }
+.service-card .icon { width:48px; height:48px; background:var(--accent-bg); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:24px; margin-bottom:16px; }
+.service-card h3 { font-size:18px; font-weight:700; margin-bottom:8px; }
+.service-card p { color:var(--muted); font-size:14px; margin-bottom:16px; }
+.service-card ul { list-style:none; }
+.service-card ul li { font-size:13px; color:var(--muted); padding:4px 0; padding-left:20px; position:relative; }
+.service-card ul li::before { content:"✓"; position:absolute; left:0; color:var(--green); font-weight:700; }
+
+/* RESULTS */
+.results-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:20px; }
+.result-card { background:var(--green-bg); border:1px solid #d1fae5; border-radius:var(--radius); padding:28px; text-align:center; }
+.result-card .num { font-size:36px; font-weight:800; color:var(--green); }
+.result-card .label { font-size:14px; color:var(--muted); margin-top:4px; }
+
+/* FAQ */
+.faq-list { max-width:700px; }
+.faq-item { border-bottom:1px solid #e5e7eb; padding:20px 0; }
+.faq-q { font-weight:700; font-size:16px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; }
+.faq-q::after { content:"+"; font-size:24px; color:var(--accent); transition:transform 0.2s; }
+.faq-item.open .faq-q::after { transform:rotate(45deg); }
+.faq-a { color:var(--muted); font-size:14px; max-height:0; overflow:hidden; transition:max-height 0.3s, padding 0.3s; }
+.faq-item.open .faq-a { max-height:200px; padding-top:12px; }
+
+/* CTA SECTION */
+.cta-section { background:var(--gradient); border-radius:20px; padding:64px 40px; text-align:center; color:#fff; margin:40px auto; max-width:900px; }
+.cta-section h2 { font-size:clamp(24px, 3.5vw, 36px); font-weight:800; margin-bottom:12px; }
+.cta-section p { font-size:16px; opacity:0.9; margin-bottom:28px; }
+.cta-section a { display:inline-block; background:#fff; color:var(--accent); padding:16px 40px; border-radius:10px; font-weight:700; font-size:17px; text-decoration:none; transition:all 0.2s; }
+.cta-section a:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(0,0,0,0.2); }
+
+/* FOOTER */
+footer { text-align:center; padding:40px 24px; color:var(--muted); font-size:13px; }
+
+/* RESPONSIVE */
+@media(max-width:640px) {
+  .proof-stats { gap:24px; }
+  .hero { padding:120px 20px 60px; }
+  .section { padding:60px 20px; }
+  .cta-section { padding:40px 24px; margin:20px 16px; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-inner">
+    <div class="nav-logo">MedSpaAI</div>
+    <a href="#book" class="nav-cta">Book Free Strategy Call →</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-badge">🤖 AI-Powered Growth for Med Spas</div>
+  <h1>Stop Losing Patients to <span class="highlight">Slow Follow-Ups</span> and Missed Messages</h1>
+  <p>Our AI systems respond to every inquiry in under 60 seconds, book appointments 24/7, and follow up automatically — so you can focus on treatments, not chasing leads.</p>
+  <a href="#book" class="hero-cta">See How It Works — Free Demo ↓</a>
+  <p class="hero-sub">No commitment. 15-minute call. See results in the first week.</p>
+</section>
+
+<!-- SOCIAL PROOF -->
+<div class="proof-bar">
+  <p>Trusted by med spas focused on growth</p>
+  <div class="proof-stats">
+    <div class="proof-stat"><div class="num">&lt;60s</div><div class="label">Avg Response Time</div></div>
+    <div class="proof-stat"><div class="num">24/7</div><div class="label">Always Available</div></div>
+    <div class="proof-stat"><div class="num">3x</div><div class="label">More Bookings</div></div>
+    <div class="proof-stat"><div class="num">0</div><div class="label">Missed Follow-Ups</div></div>
+  </div>
+</div>
+
+<!-- PROBLEM -->
+<section class="section">
+  <div class="section-label">The Problem</div>
+  <h2>Your Front Desk Can't Keep Up</h2>
+  <p class="desc">Every missed DM, late reply, or forgotten follow-up is a patient who books with your competitor instead.</p>
+  <div class="problems">
+    <div class="problem-card">
+      <div class="icon">📱</div>
+      <h3>Instagram DMs Go Unanswered</h3>
+      <p>Potential patients message at 9 PM on a Tuesday. By the time you reply at 10 AM Wednesday, they've already booked elsewhere.</p>
+    </div>
+    <div class="problem-card">
+      <div class="icon">🕐</div>
+      <h3>Follow-Ups Fall Through the Cracks</h3>
+      <p>You meant to follow up with that Botox inquiry from last week. But things got busy. Now they're gone.</p>
+    </div>
+    <div class="problem-card">
+      <div class="icon">📊</div>
+      <h3>No System = No Scale</h3>
+      <p>Your growth depends on whoever remembers to check messages today. That's not a strategy — it's a liability.</p>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="section" style="background:var(--white); margin:0; max-width:100%; padding:80px 24px;">
+  <div style="max-width:1100px; margin:0 auto;">
+    <div class="section-label">How It Works</div>
+    <h2>Three Steps to Automated Growth</h2>
+    <p class="desc">We set everything up for you. No tech skills needed. No extra staff to hire.</p>
+    <div class="steps">
+      <div class="step">
+        <h3>We Audit Your Funnel</h3>
+        <p>We review your Instagram, website, and booking flow. We find exactly where you're losing patients — and how to fix it in days, not months.</p>
+      </div>
+      <div class="step">
+        <h3>We Deploy Your AI System</h3>
+        <p>Custom AI chatbot trained on your services, pricing, and brand voice. It responds to DMs, answers questions, and books consultations — automatically.</p>
+      </div>
+      <div class="step">
+        <h3>You Get More Bookings</h3>
+        <p>Every inquiry gets a response. Every lead gets followed up. You see more appointments on the calendar without lifting a finger.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SERVICES -->
+<section class="section">
+  <div class="section-label">What We Build For You</div>
+  <h2>AI Systems That Actually Drive Revenue</h2>
+  <p class="desc">Not generic chatbots. Purpose-built systems for med spas that convert inquiries into booked appointments.</p>
+  <div class="services">
+    <div class="service-card">
+      <div class="icon">💬</div>
+      <h3>AI Booking Agent</h3>
+      <p>24/7 conversational AI that answers questions, recommends treatments, and books appointments through your existing system.</p>
+      <ul>
+        <li>Trained on your specific services & pricing</li>
+        <li>Handles objections naturally</li>
+        <li>Integrates with your booking software</li>
+        <li>Sounds like your best front-desk person</li>
+      </ul>
+    </div>
+    <div class="service-card">
+      <div class="icon">🔄</div>
+      <h3>Automated Follow-Up Sequences</h3>
+      <p>Personalized 5-touch follow-up sequences that re-engage cold leads and convert "maybe later" into "yes, book me in."</p>
+      <ul>
+        <li>Timed perfectly over 21 days</li>
+        <li>Personalized to each lead's interest</li>
+        <li>Multi-channel (DM, email, SMS)</li>
+        <li>Set it once, runs forever</li>
+      </ul>
+    </div>
+    <div class="service-card">
+      <div class="icon">✍️</div>
+      <h3>Conversion-Focused Copy</h3>
+      <p>Website copy, Instagram captions, and ad scripts written to convert browsers into bookers. No more "We offer Botox" — try "Look 10 years younger by Friday."</p>
+      <ul>
+        <li>Homepage & service page rewrites</li>
+        <li>Instagram content that sells</li>
+        <li>Ad copy that lowers your CPA</li>
+        <li>Before/after storytelling frameworks</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- RESULTS -->
+<section class="section" style="background:var(--white); margin:0; max-width:100%; padding:80px 24px;">
+  <div style="max-width:1100px; margin:0 auto;">
+    <div class="section-label">Expected Results</div>
+    <h2>What Happens When Every Lead Gets a Response</h2>
+    <p class="desc">Based on industry benchmarks for med spas implementing AI-powered response systems.</p>
+    <div class="results-grid">
+      <div class="result-card"><div class="num">3x</div><div class="label">More Appointments Booked</div></div>
+      <div class="result-card"><div class="num">85%</div><div class="label">Faster Response Time</div></div>
+      <div class="result-card"><div class="num">40%</div><div class="label">Higher Lead Conversion</div></div>
+      <div class="result-card"><div class="num">10+hrs</div><div class="label">Saved Per Week</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="section">
+  <div class="section-label">FAQ</div>
+  <h2>Common Questions</h2>
+  <div class="faq-list">
+    <div class="faq-item">
+      <div class="faq-q">How long does setup take?</div>
+      <div class="faq-a">Most med spas are live within 5-7 days. We handle everything — you just review and approve.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">Will the AI sound robotic?</div>
+      <div class="faq-a">No. We train it on your brand voice, your services, and real patient conversations. Most patients can't tell the difference. It sounds like your best front-desk person on their best day.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">What if a patient asks something the AI can't handle?</div>
+      <div class="faq-a">It seamlessly escalates to your team with full context. The patient never feels dropped — and your staff gets a warm handoff instead of starting from scratch.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">Do I need to change my booking system?</div>
+      <div class="faq-a">No. We integrate with whatever you're already using — Vagaro, Zenoti, Boulevard, Acuity, you name it.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">What does it cost?</div>
+      <div class="faq-a">We offer flexible packages starting from a one-time setup fee + small monthly. Most clients see ROI in the first month from increased bookings alone. Let's talk specifics on the call.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">Can I see a demo first?</div>
+      <div class="faq-a">Absolutely. Book a free 15-minute strategy call and we'll show you a live demo customized to your med spa. No commitment required.</div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section id="book">
+  <div class="cta-section">
+    <h2>Ready to Stop Losing Patients to Slow Follow-Ups?</h2>
+    <p>Book a free 15-minute strategy call. We'll audit your current funnel and show you exactly where you're leaving money on the table.</p>
+    <a href="https://calendly.com/YOURLINK" id="cta-btn">Book My Free Strategy Call →</a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <p>© 2026 MedSpaAI — AI-Powered Growth Systems for Med Spas</p>
+</footer>
+
+<script>
+// FAQ toggle
+document.querySelectorAll('.faq-q').forEach(q => {
+  q.addEventListener('click', () => q.parentElement.classList.toggle('open'));
+});
+
+// Smooth scroll for CTA buttons
+document.querySelectorAll('a[href="#book"]').forEach(a => {
+  a.addEventListener('click', e => {
+    e.preventDefault();
+    document.getElementById('book').scrollIntoView({ behavior:'smooth' });
+  });
+});
+</script>
+</body>
+</html>
