@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Follow-Up Sequence Generator — MedSpa Outreach</title>
+<style>
+:root { --bg:#0f0f13; --surface:#1a1a24; --surface2:#24243a; --border:#2d2d44; --text:#e4e4f0; --muted:#8888a8; --accent:#7c5cfc; --accent2:#a78bfa; --green:#34d399; --yellow:#fbbf24; --orange:#fb923c; --radius:10px; }
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Inter',-apple-system,sans-serif; background:var(--bg); color:var(--text); min-height:100vh; padding:20px; }
+.app { max-width:900px; margin:0 auto; }
+h1 { font-size:26px; margin-bottom:4px; }
+h1 span { background:linear-gradient(135deg,var(--accent),var(--accent2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+.subtitle { color:var(--muted); font-size:14px; margin-bottom:24px; }
+.card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:20px; margin-bottom:16px; }
+.card h3 { margin-bottom:12px; font-size:16px; }
+label { display:block; font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px; margin-top:12px; }
+input,select,textarea { width:100%; background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:8px 12px; color:var(--text); font-size:14px; font-family:inherit; }
+textarea { min-height:60px; resize:vertical; }
+.btn { background:var(--accent); color:#fff; border:none; border-radius:8px; padding:10px 20px; font-size:14px; cursor:pointer; font-weight:600; margin-top:16px; }
+.btn:hover { opacity:0.85; }
+.btn-copy { background:var(--surface2); border:1px solid var(--border); color:var(--text); padding:6px 14px; font-size:12px; border-radius:6px; cursor:pointer; float:right; }
+.btn-copy:hover { border-color:var(--accent); }
+.sequence { margin-top:20px; }
+.msg-card { background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius); padding:16px; margin-bottom:12px; position:relative; }
+.msg-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+.msg-day { font-size:12px; color:var(--accent2); font-weight:600; text-transform:uppercase; }
+.msg-channel { font-size:11px; color:var(--muted); background:var(--bg); padding:2px 8px; border-radius:12px; }
+.msg-body { font-size:14px; line-height:1.6; white-space:pre-wrap; }
+.msg-tip { font-size:12px; color:var(--yellow); margin-top:8px; font-style:italic; }
+.stats-row { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:20px; }
+.stat { text-align:center; padding:16px; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); }
+.stat-val { font-size:24px; font-weight:700; color:var(--accent2); }
+.stat-lbl { font-size:11px; color:var(--muted); text-transform:uppercase; margin-top:4px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>🔄 <span>Follow-Up Sequence Generator</span></h1>
+  <p class="subtitle">Generate personalized multi-touch follow-up sequences for med spa leads</p>
+
+  <div class="stats-row">
+    <div class="stat"><div class="stat-val">5</div><div class="stat-lbl">Touch Points</div></div>
+    <div class="stat"><div class="stat-val">21</div><div class="stat-lbl">Day Sequence</div></div>
+    <div class="stat"><div class="stat-val">~40%</div><div class="stat-lbl">Industry Reply Rate</div></div>
+  </div>
+
+  <div class="card">
+    <h3>Lead Details</h3>
+    <label>Business Name</label><input id="bizName" placeholder="Pure Bliss Med Spa">
+    <label>Instagram Handle</label><input id="handle" placeholder="@pureblissmedspa">
+    <label>Owner/Manager Name (if known)</label><input id="ownerName" placeholder="Dr. Sarah">
+    <label>Their Biggest Weakness (from audit)</label>
+    <select id="weakness">
+      <option value="copy">Weak website copy / unclear value prop</option>
+      <option value="cta">Missing or weak CTAs</option>
+      <option value="social">Inconsistent social media / weak captions</option>
+      <option value="proof">No social proof / testimonials</option>
+      <option value="beforeafter">Missing before/after gallery</option>
+      <option value="pricing">No pricing transparency</option>
+      <option value="booking">Poor booking flow</option>
+    </select>
+    <label>Their Follower Count</label><input id="followers" type="number" placeholder="40000">
+    <label>City/Market</label><input id="city" placeholder="Atlanta">
+    <label>Specific Detail You Noticed</label><textarea id="detail" placeholder="e.g. Their hero section says 'Welcome to Pure Bliss' instead of leading with results"></textarea>
+    <button class="btn" onclick="generate()">Generate 5-Touch Sequence</button>
+  </div>
+
+  <div id="output"></div>
+</div>
+
+<script>
+const TEMPLATES = {
+  copy: {
+    pain: "website copy that doesn't convert visitors into booked appointments",
+    fix: "conversion-focused copy rewrite",
+    proof: "copy changes alone can increase booking rates by 30-50%"
+  },
+  cta: {
+    pain: "CTAs that are either missing or too soft to drive action",
+    fix: "strategic CTA placement and urgency-driven language",
+    proof: "proper CTA optimization typically increases conversions by 20-35%"
+  },
+  social: {
+    pain: "inconsistent posting and captions that don't drive engagement or bookings",
+    fix: "caption templates and content strategy",
+    proof: "med spas with strategic captions see 2-3x more DM inquiries"
+  },
+  proof: {
+    pain: "missing testimonials and social proof that build trust",
+    fix: "social proof strategy — testimonials, reviews, and trust signals",
+    proof: "92% of consumers read reviews before choosing a med spa"
+  },
+  beforeafter: {
+    pain: "before/after galleries that are buried or missing entirely",
+    fix: "before/after showcase strategy",
+    proof: "before/after content gets 3x more engagement than any other med spa content type"
+  },
+  pricing: {
+    pain: "no pricing transparency, which kills trust before the consultation",
+    fix: "pricing page strategy that builds trust without undercutting",
+    proof: "transparent pricing pages reduce bounce rate by up to 40%"
+  },
+  booking: {
+    pain: "a booking flow that adds friction and loses potential clients",
+    fix: "streamlined booking funnel optimization",
+    proof: "reducing booking steps from 5 to 2 can double conversion rates"
+  }
+};
+
+function generate() {
+  const biz = document.getElementById('bizName').value || 'your med spa';
+  const handle = document.getElementById('handle').value || '@medspa';
+  const owner = document.getElementById('ownerName').value;
+  const w = document.getElementById('weakness').value;
+  const followers = parseInt(document.getElementById('followers').value) || 0;
+  const city = document.getElementById('city').value || 'your city';
+  const detail = document.getElementById('detail').value;
+  const t = TEMPLATES[w];
+  const greeting = owner ? `Hey ${owner}!` : 'Hey!';
+  const followerNote = followers > 10000 ? `${(followers/1000).toFixed(0)}K followers is impressive — ` : followers > 0 ? `${(followers/1000).toFixed(1)}K followers and growing — ` : '';
+
+  const messages = [
+    {
+      day: 'Day 0 — Initial DM',
+      channel: 'Instagram DM',
+      body: `${greeting} 👋 Love what you're building with ${biz}${city ? ' in ' + city : ''}. ${followerNote}you've clearly built something people trust.
+
+${detail ? `I noticed something specific: ${detail}. ` : ''}Here's the thing — you have ${t.pain}. And in a competitive market like ${city}, that's leaving money on the table.
+
+I specialize in ${t.fix} specifically for med spas. ${t.proof}.
+
+Would you be open to me putting together a quick breakdown of what I'd change? No cost — just want to show you what's possible.`,
+      tip: 'Send between 10 AM - 2 PM local time. Tuesdays and Wednesdays get highest reply rates.'
+    },
+    {
+      day: 'Day 3 — Soft Bump',
+      channel: 'Instagram DM',
+      body: `Hey! Just following up on my message from a few days ago about ${biz}'s ${w === 'copy' ? 'website copy' : w === 'social' ? 'social strategy' : 'online presence'}. 
+
+No pressure at all — I know you're busy running a business. But I actually went ahead and jotted down 3 quick wins you could implement this week. Want me to send them over?`,
+      tip: 'Keep it short. The "3 quick wins" teaser creates curiosity without being pushy.'
+    },
+    {
+      day: 'Day 7 — Value Drop',
+      channel: 'Instagram DM',
+      body: `${owner ? owner + ', h' : 'H'}ere's something I thought might help regardless of whether we work together:
+
+I just put together a breakdown of the top 3 things ${city} med spas are doing wrong with their ${w === 'copy' ? 'website copy' : w === 'social' ? 'Instagram captions' : w === 'cta' ? 'call-to-actions' : 'online presence'}. ${biz} isn't the worst offender by far, but there are a couple gaps that could be costing you 5-10 booked appointments per month.
+
+Happy to share the full breakdown — it's genuinely useful even if you DIY the fixes. Just say the word 👊`,
+      tip: 'This is the "give value freely" touch. It positions you as an expert, not a salesperson.'
+    },
+    {
+      day: 'Day 14 — Case Study / Social Proof',
+      channel: 'Instagram DM or Email',
+      body: `Quick update — I just wrapped up a project with a med spa similar to ${biz} (${followers > 10000 ? 'similar follower count' : 'similar market size'}). We ${w === 'copy' ? 'rewrote their homepage and service pages' : w === 'social' ? 'overhauled their caption strategy' : w === 'cta' ? 'redesigned their CTA flow' : 'optimized their online presence'} and they saw a ${w === 'booking' ? '2x increase in online bookings' : '35% increase in consultation requests'} within 30 days.
+
+I genuinely think ${biz} could see similar results. The fixes aren't even that complex — it's about knowing what moves the needle in the med spa space specifically.
+
+Would 10 minutes on a call be worth exploring? I can walk you through exactly what I'd do. If it doesn't make sense, no hard feelings.`,
+      tip: 'If you don\'t have a case study yet, frame it as "a med spa I audited" instead. Still builds credibility.'
+    },
+    {
+      day: 'Day 21 — Breakup Message',
+      channel: 'Instagram DM',
+      body: `${owner ? owner + ', I' : 'I'}'ll keep this short — I've reached out a few times about helping ${biz} with ${t.fix} and I totally get if the timing isn't right.
+
+I'm going to stop following up, but my offer stands: if you ever want a free audit of your ${w === 'copy' ? 'website copy' : w === 'social' ? 'social strategy' : 'online presence'}, just shoot me a message. I work exclusively with med spas so I'll always have fresh insights.
+
+Wishing you all the best with ${biz}! 🙌`,
+      tip: 'The breakup message often gets the highest reply rate (20-30%). People respond when they feel the opportunity closing.'
+    }
+  ];
+
+  let html = '<div class="sequence"><h2 style="margin-bottom:16px;">📬 Generated Sequence for ' + biz + '</h2>';
+  messages.forEach((m, i) => {
+    html += `<div class="msg-card">
+      <div class="msg-header">
+        <span class="msg-day">${m.day}</span>
+        <span class="msg-channel">${m.channel}</span>
+      </div>
+      <div class="msg-body">${m.body}</div>
+      <div class="msg-tip">💡 ${m.tip}</div>
+      <button class="btn-copy" onclick="copyMsg(${i})">📋 Copy</button>
+    </div>`;
+  });
+  html += `<button class="btn" onclick="copyAll()" style="width:100%;">📋 Copy Entire Sequence</button></div>`;
+
+  document.getElementById('output').innerHTML = html;
+  window._msgs = messages;
+}
+
+function copyMsg(i) {
+  navigator.clipboard.writeText(window._msgs[i].body).then(() => {
+    event.target.textContent = '✅ Copied!';
+    setTimeout(() => event.target.textContent = '📋 Copy', 1500);
+  });
+}
+
+function copyAll() {
+  const text = window._msgs.map(m => `--- ${m.day} (${m.channel}) ---\n\n${m.body}\n`).join('\n');
+  navigator.clipboard.writeText(text).then(() => alert('Full sequence copied!'));
+}
+</script>
+</body>
+</html>
