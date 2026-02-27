@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Day 1 Copy-Paste DMs | MedSpa Outreach</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      font-family: 'Courier New', monospace; 
+      background: #0f0f13; 
+      color: #e4e4f0; 
+      padding: 20px;
+    }
+    .container { max-width: 800px; margin: 0 auto; }
+    h1 { font-size: 28px; margin-bottom: 8px; color: #a78bfa; }
+    .subtitle { color: #8888a8; margin-bottom: 24px; font-size: 14px; }
+    .prospect { 
+      background: #1a1a24; 
+      border: 1px solid #2d2d44; 
+      border-radius: 8px; 
+      padding: 16px; 
+      margin-bottom: 16px;
+    }
+    .prospect-name { 
+      font-weight: bold; 
+      color: #60a5fa; 
+      font-size: 16px; 
+      margin-bottom: 8px;
+    }
+    .handle { 
+      color: #8888a8; 
+      font-size: 12px; 
+      margin-bottom: 12px;
+    }
+    .message-box { 
+      background: #0f0f13; 
+      border: 1px solid #2d2d44; 
+      border-radius: 6px; 
+      padding: 12px; 
+      margin-bottom: 12px;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    .copy-btn { 
+      background: #7c5cfc; 
+      color: white; 
+      border: none; 
+      padding: 8px 16px; 
+      border-radius: 6px; 
+      cursor: pointer; 
+      font-size: 12px;
+      font-weight: bold;
+      transition: 0.2s;
+    }
+    .copy-btn:hover { 
+      background: #a78bfa; 
+    }
+    .copy-btn.copied { 
+      background: #34d399; 
+    }
+    .notes { 
+      font-size: 12px; 
+      color: #8888a8; 
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid #2d2d44;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>📋 Day 1 Copy-Paste DMs</h1>
+  <p class="subtitle">Prospects 21-30 (Feb 23 Start) — Ready to send today (Feb 27)</p>
+
+  <div class="prospect">
+    <div class="prospect-name">1. Pure Bliss Med Spa</div>
+    <div class="handle">@pureblissmedspa (40K followers)</div>
+    <div class="message-box">Hey Pure Bliss team! 👋
+
+I work with med spas across the US to 10x their lead quality & booking rates through AI-powered copy & personalized booking agents.
+
+I noticed your site has solid services but your copy could punch harder on results & transformation. I've helped similar spas increase bookings by 35-50%.
+
+Would love to show you a quick demo of how we're doing this. No pitch, just results.
+
+Free consultation?
+
+— Trevor</div>
+    <button class="copy-btn" onclick="copyText(this)">Copy Message</button>
+    <div class="notes">Atlanta powerhouse. 40K followers. Website needs punch.</div>
+  </div>
+
+  <div class="prospect">
+    <div class="prospect-name">2. Ecobel Atlanta</div>
+    <div class="handle">@ecobelmedspa (21K followers)</div>
+    <div class="message-box">Hey Ecobel! 👋
+
+I help med spas turn browsers into bookers through AI-powered copy that sells transformation (not just procedures).
+
+Your vibe is great, but I'm guessing you're leaving money on the table with generic booking pages. I've built booking agents that increase conversions by 30-40%.
+
+Quick question: How many qualified leads are you getting per week right now?
+
+— Trevor</div>
+    <button class="copy-btn" onclick="copyText(this)">Copy Message</button>
+    <div class="notes">Boutique positioning. 21K followers. Natural, undetectable results.</div>
+  </div>
+
+  <div class="prospect">
+    <div class="prospect-name">3. Glow Med Spa NYC</div>
+    <div class="handle">@glamglowmedspa (26K followers)</div>
+    <div class="message-box">Hey Glow! ✨
+
+I'm building AI copy & booking automation for med spas. Saw your 26K following and thought you might be interested.
+
+Most med spas lose 40-50% of potential clients at booking because their copy & process sucks. We fix that with hyper-personalized landing pages & AI chatbots.
+
+Worth a 15-min call to explore?
+
+— Trevor</div>
+    <button class="copy-btn" onclick="copyText(this)">Copy Message</button>
+    <div class="notes">NYC market. 26K followers. RESULTS focus needed.</div>
+  </div>
+
+  <div class="prospect">
+    <div class="prospect-name">4. Cheeky Denver</div>
+    <div class="handle">@cheekydenver (15K followers)</div>
+    <div class="message-box">Hey Cheeky! 👋
+
+Love your brand personality. I help med spas like you scale bookings through smarter copy & AI automation.
+
+Your vibe is unique, but are you converting that 15K following into consistent bookings? That's where most brands leak revenue.
+
+I've built a few solutions that fix this. Curious to chat?
+
+— Trevor</div>
+    <button class="copy-btn" onclick="copyText(this)">Copy Message</button>
+    <div class="notes">Strong brand personality. Playful. Needs harder selling.</div>
+  </div>
+
+  <div class="prospect">
+    <div class="prospect-name">5. RESTOR Denver</div>
+    <div class="handle">@restormedicalspa (15K followers)</div>
+    <div class="message-box">Hi RESTOR team! 👋
+
+I work with med spas to increase qualified bookings through AI-powered copy & personalized client automation.
+
+Saw your brand & thought you'd be a perfect fit. Your positioning is solid, but I bet your booking conversion could be 2-3x higher.
+
+Worth exploring together?
+
+— Trevor</div>
+    <button class="copy-btn" onclick="copyText(this)">Copy Message</button>
+    <div class="notes">15K followers. 'Restor' positioning is strong.</div>
+  </div>
+
+  <script>
+    function copyText(button) {
+      const messageBox = button.previousElementSibling;
+      const text = messageBox.textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        const originalText = button.textContent;
+        button.textContent = '✓ Copied!';
+        button.classList.add('copied');
+        setTimeout(() => {
+          button.textContent = originalText;
+          button.classList.remove('copied');
+        }, 2000);
+      });
+    }
+  </script>
+</div>
+</body>
+</html>
