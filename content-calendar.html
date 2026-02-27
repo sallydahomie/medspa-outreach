@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MedSpa Instagram Content Calendar</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a0f;--card:#12121a;--accent:#7c3aed;--accent2:#a855f7;--green:#10b981;--yellow:#f59e0b;--red:#ef4444;--blue:#3b82f6;--pink:#ec4899;--text:#e2e8f0;--muted:#64748b;--border:#1e1e2e}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.header{background:linear-gradient(135deg,#1a1025,#0f172a);border-bottom:1px solid var(--border);padding:20px 30px;display:flex;justify-content:space-between;align-items:center}
+.header h1{font-size:1.5rem;background:linear-gradient(135deg,var(--pink),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.nav{display:flex;gap:10px;padding:15px 30px;border-bottom:1px solid var(--border)}
+.nav button{padding:8px 16px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-size:.85rem;transition:all .2s}
+.nav button.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;padding:20px 30px}
+.cal-header{padding:10px;text-align:center;color:var(--muted);font-size:.8rem;font-weight:600}
+.cal-day{background:var(--card);border:1px solid var(--border);border-radius:8px;min-height:120px;padding:8px;cursor:pointer;transition:all .2s}
+.cal-day:hover{border-color:var(--accent)}
+.cal-day.today{border-color:var(--accent);box-shadow:0 0 10px rgba(124,58,237,.3)}
+.cal-day.other-month{opacity:.3}
+.cal-day .day-num{font-size:.85rem;font-weight:600;margin-bottom:4px}
+.cal-day .post-chip{font-size:.7rem;padding:3px 6px;border-radius:4px;margin-bottom:3px;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chip-carousel{background:rgba(236,72,153,.15);color:var(--pink)}
+.chip-reel{background:rgba(124,58,237,.15);color:var(--accent2)}
+.chip-story{background:rgba(245,158,11,.15);color:var(--yellow)}
+.chip-post{background:rgba(59,130,246,.15);color:var(--blue)}
+.chip-live{background:rgba(239,68,68,.15);color:var(--red)}
+.sidebar{position:fixed;right:0;top:0;width:400px;height:100vh;background:var(--card);border-left:1px solid var(--border);transform:translateX(100%);transition:transform .3s;z-index:100;overflow-y:auto;padding:24px}
+.sidebar.open{transform:translateX(0)}
+.sidebar h3{margin-bottom:15px}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99;display:none}
+.overlay.show{display:block}
+.content-bank{padding:20px 30px}
+.content-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px}
+.content-card h4{font-size:.95rem;margin-bottom:6px}
+.content-card p{font-size:.85rem;color:var(--muted);line-height:1.5}
+.content-card .tags{margin-top:8px;display:flex;gap:6px;flex-wrap:wrap}
+.tag{padding:3px 8px;border-radius:12px;font-size:.7rem;background:rgba(124,58,237,.1);color:var(--accent2)}
+.form-group{margin-bottom:12px}
+.form-group label{display:block;font-size:.85rem;color:var(--muted);margin-bottom:4px}
+.form-group input,.form-group select,.form-group textarea{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:.85rem;font-family:inherit}
+.form-group textarea{min-height:80px;resize:vertical}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:var(--accent)}
+.btn{padding:8px 16px;border:none;border-radius:8px;cursor:pointer;font-size:.85rem;font-weight:600;transition:all .2s}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:var(--accent2)}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text)}
+.btn-sm{padding:5px 10px;font-size:.75rem}
+.btn-danger{background:var(--red);color:#fff}
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;padding:15px 30px}
+.mini-stat{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center}
+.mini-stat .num{font-size:1.5rem;font-weight:700}
+.mini-stat .label{color:var(--muted);font-size:.75rem;margin-top:2px}
+.week-view{padding:20px 30px}
+.week-day{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:10px}
+.week-day-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.week-day-header h4{font-size:.95rem}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>📅 Instagram Content Calendar</h1>
+    <div style="color:var(--muted);font-size:.85rem;margin-top:4px">Plan, create, post. Stay consistent.</div>
+  </div>
+  <div style="display:flex;gap:10px">
+    <button class="btn btn-outline" onclick="showIdeas()">💡 Content Ideas</button>
+    <button class="btn btn-primary" onclick="openNewPost()">+ New Post</button>
+  </div>
+</div>
+
+<div class="stats-row" id="statsRow"></div>
+
+<div class="nav">
+  <button class="active" onclick="switchView('month',this)">Month</button>
+  <button onclick="switchView('week',this)">This Week</button>
+  <button onclick="switchView('ideas',this)">Content Bank</button>
+</div>
+
+<div id="monthView" class="calendar"></div>
+<div id="weekView" class="week-view" style="display:none"></div>
+<div id="ideasView" class="content-bank" style="display:none"></div>
+
+<div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+<div class="sidebar" id="sidebar">
+  <div id="sidebarContent"></div>
+</div>
+
+<script>
+const STORAGE_KEY = 'medspa_content_cal';
+const POST_TYPES = {carousel:'Carousel',reel:'Reel',story:'Story',post:'Single Post',live:'Live'};
+const CATEGORIES = ['Educational','Before/After','Behind the Scenes','Testimonial','Promotion','Tips & Tricks','FAQ','Trending','Personal Brand'];
+
+// Pre-loaded content ideas for med spa AI services
+const CONTENT_IDEAS = [
+  {title:"Why Med Spas Are Losing Clients to Bad Booking Systems",type:"carousel",category:"Educational",caption:"80% of clients won't call to book. Here's what happens when you don't have online booking... 🤯\n\n1️⃣ Client sees your ad\n2️⃣ Clicks to your page\n3️⃣ Sees 'Call to book'\n4️⃣ Leaves. Books with your competitor.\n\nThe fix? AI-powered booking that works 24/7.\n\n#MedSpa #AIBooking #MedSpaMarketing",hashtags:["MedSpa","AIBooking","MedSpaMarketing","Aesthetics"]},
+  {title:"3 Things Your MedSpa Website Is Missing",type:"reel",category:"Educational",caption:"Your website is costing you clients. Here's what's missing:\n\n❌ No chatbot = missed bookings at 2 AM\n❌ No FAQ section = phone ringing all day\n❌ No social proof = trust issues\n\nFix these 3 things and watch your bookings jump 📈\n\n#MedSpaOwner #MedSpaGrowth #AIForBusiness",hashtags:["MedSpaOwner","MedSpaGrowth","AIForBusiness"]},
+  {title:"Client Booking Journey: Before vs After AI",type:"carousel",category:"Before/After",caption:"Before AI: Phone tag, missed calls, lost clients\nAfter AI: 24/7 booking, instant responses, happy clients\n\nSwipe to see the difference ➡️\n\n#MedSpaTech #AIAutomation #BookingSystem",hashtags:["MedSpaTech","AIAutomation","BookingSystem"]},
+  {title:"Day in My Life: Building AI for Med Spas",type:"reel",category:"Behind the Scenes",caption:"POV: You build AI tools that help med spas make more money 💰\n\n☕ Morning: Analyzing client booking patterns\n💻 Afternoon: Training chatbots to sound human\n📊 Evening: Checking conversion rates\n\nThis is what AI consulting actually looks like.\n\n#TechEntrepreneur #AI #MedSpaConsulting",hashtags:["TechEntrepreneur","AI","MedSpaConsulting"]},
+  {title:"'I Didn't Know I Needed This' - Client Reaction to AI Chatbot",type:"reel",category:"Testimonial",caption:"Every med spa owner after seeing their first AI chatbot demo: 😱\n\n'Wait... it just booked 3 appointments while we were talking?'\n\nYes. Yes it did.\n\nDM me 'DEMO' to see it in action 👇\n\n#MedSpaOwner #AIDemo #BusinessGrowth",hashtags:["MedSpaOwner","AIDemo","BusinessGrowth"]},
+  {title:"Weekend Special: Free Booking Audit for Med Spas",type:"story",category:"Promotion",caption:"🚨 This weekend only: Free AI booking audit for med spa owners.\n\nI'll analyze your current booking flow and show you exactly where you're losing clients.\n\nDM 'AUDIT' to claim yours 📩",hashtags:["MedSpa","FreeAudit","BookingOptimization"]},
+  {title:"How to Respond to DMs in 2 Seconds (Without Hiring Anyone)",type:"carousel",category:"Tips & Tricks",caption:"Your DMs are a goldmine. But responding slow = losing money.\n\nHere's how AI handles it:\n⚡ Instant response (day or night)\n🎯 Qualifies the lead automatically\n📅 Books the appointment\n💬 Follows up if they ghost\n\nAll while you sleep. Interested? Link in bio 👆\n\n#DMAutomation #MedSpaGrowth #AITools",hashtags:["DMAutomation","MedSpaGrowth","AITools"]},
+  {title:"Med Spa Owners: Stop Doing These 5 Things",type:"carousel",category:"FAQ",caption:"Things that are KILLING your med spa growth:\n\n1. Manual booking only\n2. Ignoring online reviews\n3. Posting once a month\n4. No email list\n5. Not using AI in 2026 🤖\n\nFix #5 and the rest gets easier. Trust me.\n\n#MedSpaAdvice #BusinessTips #AIConsulting",hashtags:["MedSpaAdvice","BusinessTips","AIConsulting"]},
+  {title:"Trending Sound + AI Demo Mashup",type:"reel",category:"Trending",caption:"Using [trending sound] to show what happens when a med spa installs our AI chatbot 🤖✨\n\nBefore: 😫 'Please leave a voicemail'\nAfter: 🤖 'I'd love to help you book! What treatment are you interested in?'\n\n#MedSpa #Viral #AI",hashtags:["MedSpa","Viral","AI"]},
+  {title:"Why I Left Tech to Help Med Spas",type:"reel",category:"Personal Brand",caption:"I could've stayed in big tech. Instead, I'm helping med spa owners automate their businesses.\n\nWhy? Because small business owners deserve the same AI tools that big corporations use.\n\nYour local med spa shouldn't lose to a chain just because they can't afford a tech team.\n\nThat's where I come in. 💪\n\n#Entrepreneur #SmallBusiness #AIForAll",hashtags:["Entrepreneur","SmallBusiness","AIForAll"]}
+];
+
+let posts = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+let currentMonth = new Date().getMonth();
+let currentYear = new Date().getFullYear();
+
+function switchView(view, btn) {
+  document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('monthView').style.display = view === 'month' ? 'grid' : 'none';
+  document.getElementById('weekView').style.display = view === 'week' ? 'block' : 'none';
+  document.getElementById('ideasView').style.display = view === 'ideas' ? 'block' : 'none';
+  if (view === 'week') renderWeek();
+  if (view === 'ideas') renderIdeas();
+}
+
+function renderStats() {
+  const thisMonth = posts.filter(p => {const d = new Date(p.date); return d.getMonth() === currentMonth && d.getFullYear() === currentYear;});
+  const thisWeek = posts.filter(p => {const d = new Date(p.date); const diff = (new Date() - d) / 86400000; return diff >= 0 && diff < 7;});
+  const upcoming = posts.filter(p => new Date(p.date) >= new Date());
+  
+  const typeCount = {};
+  thisMonth.forEach(p => typeCount[p.type] = (typeCount[p.type]||0) + 1);
+
+  document.getElementById('statsRow').innerHTML = `
+    <div class="mini-stat"><div class="num">${thisMonth.length}</div><div class="label">THIS MONTH</div></div>
+    <div class="mini-stat"><div class="num">${thisWeek.length}</div><div class="label">THIS WEEK</div></div>
+    <div class="mini-stat"><div class="num">${upcoming.length}</div><div class="label">UPCOMING</div></div>
+    <div class="mini-stat"><div class="num">${posts.filter(p=>p.status==='posted').length}</div><div class="label">POSTED</div></div>
+    <div class="mini-stat"><div class="num" style="font-size:1rem">${Object.entries(typeCount).map(([k,v])=>`${v} ${POST_TYPES[k]||k}`).join(', ')||'—'}</div><div class="label">MIX THIS MONTH</div></div>
+  `;
+}
+
+function renderMonth() {
+  const cal = document.getElementById('monthView');
+  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const first = new Date(currentYear, currentMonth, 1);
+  const last = new Date(currentYear, currentMonth + 1, 0);
+  const startDay = first.getDay();
+  const today = new Date(); today.setHours(0,0,0,0);
+
+  let html = days.map(d => `<div class="cal-header">${d}</div>`).join('');
+  
+  // Prev month padding
+  const prevLast = new Date(currentYear, currentMonth, 0);
+  for (let i = startDay - 1; i >= 0; i--) {
+    html += `<div class="cal-day other-month"><div class="day-num">${prevLast.getDate()-i}</div></div>`;
+  }
+
+  for (let d = 1; d <= last.getDate(); d++) {
+    const dateStr = `${currentYear}-${String(currentMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dayPosts = posts.filter(p => p.date === dateStr);
+    const isToday = new Date(dateStr).getTime() === today.getTime();
+    
+    html += `<div class="cal-day ${isToday?'today':''}" onclick="openDay('${dateStr}')">
+      <div class="day-num">${d}</div>
+      ${dayPosts.map(p => `<div class="post-chip chip-${p.type}">${p.title.slice(0,20)}</div>`).join('')}
+    </div>`;
+  }
+  
+  // Fill remaining
+  const remaining = 42 - (startDay + last.getDate());
+  for (let i = 1; i <= remaining; i++) {
+    html += `<div class="cal-day other-month"><div class="day-num">${i}</div></div>`;
+  }
+
+  cal.innerHTML = html;
+}
+
+function renderWeek() {
+  const container = document.getElementById('weekView');
+  const today = new Date();
+  const dayOfWeek = today.getDay();
+  const weekStart = new Date(today); weekStart.setDate(today.getDate() - dayOfWeek);
+  
+  let html = '';
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(weekStart); d.setDate(weekStart.getDate() + i);
+    const dateStr = d.toISOString().slice(0,10);
+    const dayPosts = posts.filter(p => p.date === dateStr);
+    const isToday = d.toDateString() === today.toDateString();
+    
+    html += `<div class="week-day" style="${isToday?'border-color:var(--accent)':''}">
+      <div class="week-day-header">
+        <h4>${d.toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'})} ${isToday?'⬅️ Today':''}</h4>
+        <button class="btn btn-sm btn-outline" onclick="openNewPost('${dateStr}')">+ Add</button>
+      </div>
+      ${dayPosts.length ? dayPosts.map(p => `
+        <div style="display:flex;align-items:center;gap:10px;padding:8px;background:var(--bg);border-radius:8px;margin-bottom:6px">
+          <span class="post-chip chip-${p.type}" style="margin:0">${POST_TYPES[p.type]}</span>
+          <span style="font-size:.9rem;flex:1">${p.title}</span>
+          <span style="font-size:.75rem;color:${p.status==='posted'?'var(--green)':'var(--muted)'}">${p.status==='posted'?'✅ Posted':'📝 Draft'}</span>
+        </div>
+      `).join('') : '<div style="color:var(--muted);font-size:.85rem;padding:8px">No content planned</div>'}
+    </div>`;
+  }
+  container.innerHTML = html;
+}
+
+function renderIdeas() {
+  const container = document.getElementById('ideasView');
+  container.innerHTML = '<h3 style="margin-bottom:15px">💡 Content Ideas Bank</h3><p style="color:var(--muted);margin-bottom:20px">Click any idea to schedule it. Pre-written captions included!</p>' +
+    CONTENT_IDEAS.map((idea, i) => `
+      <div class="content-card" onclick="scheduleIdea(${i})" style="cursor:pointer">
+        <div style="display:flex;justify-content:space-between;align-items:start">
+          <h4>${idea.title}</h4>
+          <span class="post-chip chip-${idea.type}" style="flex-shrink:0">${POST_TYPES[idea.type]}</span>
+        </div>
+        <p>${idea.caption.slice(0,120)}...</p>
+        <div class="tags">${idea.hashtags.map(h=>`<span class="tag">#${h}</span>`).join('')}</div>
+      </div>
+    `).join('');
+}
+
+function openDay(dateStr) {
+  const dayPosts = posts.filter(p => p.date === dateStr);
+  const d = new Date(dateStr+'T12:00:00');
+  
+  let html = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+    <h3>${d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})}</h3>
+    <button class="btn btn-sm btn-outline" onclick="closeSidebar()">✕</button>
+  </div>`;
+  
+  if (dayPosts.length) {
+    html += dayPosts.map(p => `
+      <div class="content-card">
+        <div style="display:flex;justify-content:space-between"><h4>${p.title}</h4><span class="post-chip chip-${p.type}">${POST_TYPES[p.type]}</span></div>
+        <p style="margin-top:8px;font-size:.85rem;white-space:pre-wrap">${p.caption||''}</p>
+        <div style="margin-top:10px;display:flex;gap:8px">
+          <button class="btn btn-sm ${p.status==='posted'?'btn-outline':'btn-primary'}" onclick="togglePosted('${p.id}')">${p.status==='posted'?'↩ Unpost':'✅ Mark Posted'}</button>
+          <button class="btn btn-sm btn-outline" onclick="copyCaption('${p.id}')">📋 Copy Caption</button>
+          <button class="btn btn-sm btn-danger" onclick="deletePost('${p.id}')">🗑</button>
+        </div>
+      </div>
+    `).join('');
+  } else {
+    html += '<p style="color:var(--muted)">No content planned for this day.</p>';
+  }
+  
+  html += `<button class="btn btn-primary" style="margin-top:15px;width:100%" onclick="openNewPost('${dateStr}')">+ Add Content</button>`;
+  
+  document.getElementById('sidebarContent').innerHTML = html;
+  document.getElementById('sidebar').classList.add('open');
+  document.getElementById('overlay').classList.add('show');
+}
+
+function openNewPost(date) {
+  const dateVal = date || new Date().toISOString().slice(0,10);
+  document.getElementById('sidebarContent').innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <h3>New Post</h3>
+      <button class="btn btn-sm btn-outline" onclick="closeSidebar()">✕</button>
+    </div>
+    <div class="form-group"><label>Title</label><input id="postTitle"></div>
+    <div class="form-group"><label>Date</label><input id="postDate" type="date" value="${dateVal}"></div>
+    <div class="form-group"><label>Type</label><select id="postType">${Object.entries(POST_TYPES).map(([k,v])=>`<option value="${k}">${v}</option>`).join('')}</select></div>
+    <div class="form-group"><label>Category</label><select id="postCat">${CATEGORIES.map(c=>`<option>${c}</option>`).join('')}</select></div>
+    <div class="form-group"><label>Caption</label><textarea id="postCaption" rows="6"></textarea></div>
+    <div class="form-group"><label>Hashtags (comma-separated)</label><input id="postHash"></div>
+    <button class="btn btn-primary" style="width:100%;margin-top:10px" onclick="savePost()">Save Post</button>
+  `;
+  document.getElementById('sidebar').classList.add('open');
+  document.getElementById('overlay').classList.add('show');
+}
+
+function scheduleIdea(i) {
+  const idea = CONTENT_IDEAS[i];
+  const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate()+1);
+  openNewPost(tomorrow.toISOString().slice(0,10));
+  setTimeout(() => {
+    document.getElementById('postTitle').value = idea.title;
+    document.getElementById('postType').value = idea.type;
+    document.getElementById('postCat').value = idea.category;
+    document.getElementById('postCaption').value = idea.caption;
+    document.getElementById('postHash').value = idea.hashtags.join(', ');
+  }, 100);
+}
+
+function savePost() {
+  const title = document.getElementById('postTitle').value.trim();
+  if (!title) return;
+  posts.push({
+    id: Date.now().toString(),
+    title,
+    date: document.getElementById('postDate').value,
+    type: document.getElementById('postType').value,
+    category: document.getElementById('postCat').value,
+    caption: document.getElementById('postCaption').value,
+    hashtags: document.getElementById('postHash').value.split(',').map(s=>s.trim()).filter(Boolean),
+    status: 'draft',
+    created: new Date().toISOString()
+  });
+  save(); render(); closeSidebar();
+}
+
+function togglePosted(id) {
+  const p = posts.find(x => x.id === id);
+  p.status = p.status === 'posted' ? 'draft' : 'posted';
+  save(); render(); closeSidebar();
+}
+
+function copyCaption(id) {
+  const p = posts.find(x => x.id === id);
+  navigator.clipboard.writeText(p.caption || '');
+}
+
+function deletePost(id) {
+  if (!confirm('Delete this post?')) return;
+  posts = posts.filter(x => x.id !== id);
+  save(); render(); closeSidebar();
+}
+
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('overlay').classList.remove('show');
+}
+
+function showIdeas() {
+  document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.nav button')[2].classList.add('active');
+  document.getElementById('monthView').style.display = 'none';
+  document.getElementById('weekView').style.display = 'none';
+  document.getElementById('ideasView').style.display = 'block';
+  renderIdeas();
+}
+
+function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(posts)); }
+function render() { renderStats(); renderMonth(); }
+
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MedSpa Follow-Up Command Center</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a0f;--card:#12121a;--accent:#7c3aed;--accent2:#a855f7;--green:#10b981;--yellow:#f59e0b;--red:#ef4444;--blue:#3b82f6;--text:#e2e8f0;--muted:#64748b;--border:#1e1e2e}
+body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.header{background:linear-gradient(135deg,#1a1025,#0f172a);border-bottom:1px solid var(--border);padding:20px 30px;display:flex;justify-content:space-between;align-items:center}
+.header h1{font-size:1.5rem;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.header .date{color:var(--muted);font-size:.9rem}
+.stats-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:15px;padding:20px 30px}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px;text-align:center}
+.stat-card .num{font-size:2rem;font-weight:700}
+.stat-card .label{color:var(--muted);font-size:.8rem;margin-top:4px}
+.stat-card.urgent .num{color:var(--red)}
+.stat-card.warning .num{color:var(--yellow)}
+.stat-card.good .num{color:var(--green)}
+.stat-card.info .num{color:var(--blue)}
+.main{padding:20px 30px;display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:900px){.main{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.panel-header{padding:15px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.panel-header h2{font-size:1.1rem}
+.panel-body{padding:15px 20px;max-height:500px;overflow-y:auto}
+.lead-item{border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px;transition:all .2s}
+.lead-item:hover{border-color:var(--accent);transform:translateY(-1px)}
+.lead-item .lead-name{font-weight:600;font-size:1rem}
+.lead-item .lead-meta{color:var(--muted);font-size:.8rem;margin-top:4px}
+.lead-item .lead-actions{margin-top:10px;display:flex;gap:8px;flex-wrap:wrap}
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.75rem;font-weight:600}
+.badge-overdue{background:rgba(239,68,68,.15);color:var(--red)}
+.badge-today{background:rgba(245,158,11,.15);color:var(--yellow)}
+.badge-upcoming{background:rgba(59,130,246,.15);color:var(--blue)}
+.badge-responded{background:rgba(16,185,129,.15);color:var(--green)}
+.badge-ghosted{background:rgba(239,68,68,.1);color:#f87171}
+.btn{padding:7px 14px;border:none;border-radius:8px;cursor:pointer;font-size:.8rem;font-weight:600;transition:all .2s}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:var(--accent2)}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text)}
+.btn-outline:hover{border-color:var(--accent)}
+.btn-success{background:var(--green);color:#fff}
+.btn-sm{padding:5px 10px;font-size:.75rem}
+.message-preview{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;margin-top:10px;font-size:.85rem;line-height:1.5;white-space:pre-wrap;display:none}
+.message-preview.show{display:block}
+.copy-toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:var(--green);color:#fff;padding:10px 24px;border-radius:8px;font-weight:600;opacity:0;transition:opacity .3s;pointer-events:none;z-index:999}
+.copy-toast.show{opacity:1}
+.sequence-step{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)}
+.sequence-step:last-child{border:none}
+.step-num{width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;flex-shrink:0}
+.step-info{flex:1}
+.step-info .step-day{font-weight:600;font-size:.9rem}
+.step-info .step-desc{color:var(--muted);font-size:.8rem}
+.filter-bar{display:flex;gap:8px;flex-wrap:wrap}
+.filter-btn{padding:5px 12px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-size:.8rem;transition:all .2s}
+.filter-btn.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.empty-state{text-align:center;padding:40px;color:var(--muted)}
+.progress-bar{height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin-top:8px}
+.progress-fill{height:100%;border-radius:3px;transition:width .5s}
+textarea{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px;color:var(--text);font-family:inherit;font-size:.85rem;resize:vertical;min-height:80px}
+textarea:focus{outline:none;border-color:var(--accent)}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;display:none;align-items:center;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:16px;max-width:600px;width:90%;max-height:80vh;overflow-y:auto;padding:24px}
+.modal h3{margin-bottom:15px}
+.form-group{margin-bottom:12px}
+.form-group label{display:block;font-size:.85rem;color:var(--muted);margin-bottom:4px}
+.form-group input,.form-group select{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:.9rem}
+.form-group input:focus,.form-group select:focus{outline:none;border-color:var(--accent)}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>⚡ Follow-Up Command Center</h1>
+    <div class="date" id="dateDisplay"></div>
+  </div>
+  <div style="display:flex;gap:10px">
+    <button class="btn btn-outline" onclick="exportData()">📤 Export</button>
+    <button class="btn btn-primary" onclick="showAddLead()">+ Add Lead</button>
+  </div>
+</div>
+
+<div class="stats-bar" id="statsBar"></div>
+
+<div class="main">
+  <div class="panel" style="grid-column:1/-1">
+    <div class="panel-header">
+      <h2>🎯 Today's Actions</h2>
+      <div class="filter-bar">
+        <button class="filter-btn active" data-filter="all" onclick="setFilter('all',this)">All</button>
+        <button class="filter-btn" data-filter="overdue" onclick="setFilter('overdue',this)">Overdue</button>
+        <button class="filter-btn" data-filter="today" onclick="setFilter('today',this)">Today</button>
+        <button class="filter-btn" data-filter="responded" onclick="setFilter('responded',this)">Responded</button>
+        <button class="filter-btn" data-filter="ghosted" onclick="setFilter('ghosted',this)">No Reply</button>
+      </div>
+    </div>
+    <div class="panel-body" id="leadsList"></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header"><h2>📋 Follow-Up Sequence</h2></div>
+    <div class="panel-body">
+      <div class="sequence-step"><div class="step-num">1</div><div class="step-info"><div class="step-day">Day 0 — Initial DM</div><div class="step-desc">Personalized outreach highlighting their specific pain point</div></div></div>
+      <div class="sequence-step"><div class="step-num">2</div><div class="step-info"><div class="step-day">Day 3-4 — Soft Follow-Up</div><div class="step-desc">Quick check-in + value add (tip, insight, or compliment)</div></div></div>
+      <div class="sequence-step"><div class="step-num">3</div><div class="step-info"><div class="step-day">Day 7 — Case Study</div><div class="step-desc">Share relevant result or demo link</div></div></div>
+      <div class="sequence-step"><div class="step-num">4</div><div class="step-info"><div class="step-day">Day 14 — Breakup + Offer</div><div class="step-desc">"Last message" with a compelling limited offer</div></div></div>
+      <div class="sequence-step"><div class="step-num">5</div><div class="step-info"><div class="step-day">Day 30 — Re-engage</div><div class="step-desc">New angle, new value prop, fresh approach</div></div></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header"><h2>📊 Pipeline Health</h2></div>
+    <div class="panel-body" id="pipelineHealth"></div>
+  </div>
+</div>
+
+<div class="copy-toast" id="copyToast">✅ Copied to clipboard!</div>
+
+<div class="modal-overlay" id="addLeadModal">
+  <div class="modal">
+    <h3>Add New Lead</h3>
+    <div class="form-group"><label>Business Name</label><input id="newName" placeholder="e.g. Glow MedSpa"></div>
+    <div class="form-group"><label>Instagram Handle</label><input id="newIG" placeholder="@glowmedspa"></div>
+    <div class="form-group"><label>Location</label><input id="newLoc" placeholder="e.g. Miami, FL"></div>
+    <div class="form-group"><label>Weakness/Pain Point</label>
+      <select id="newWeakness">
+        <option value="low_engagement">Low Engagement</option>
+        <option value="no_booking">No Online Booking</option>
+        <option value="bad_website">Weak Website</option>
+        <option value="no_reviews">Few Reviews</option>
+        <option value="inconsistent_posting">Inconsistent Posting</option>
+        <option value="no_email">No Email Marketing</option>
+        <option value="generic_content">Generic Content</option>
+      </select>
+    </div>
+    <div class="form-group"><label>Notes</label><textarea id="newNotes" rows="2"></textarea></div>
+    <div style="display:flex;gap:10px;margin-top:15px">
+      <button class="btn btn-primary" onclick="addLead()">Add Lead</button>
+      <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'medspa_followup_v2';
+const today = new Date();
+today.setHours(0,0,0,0);
+
+document.getElementById('dateDisplay').textContent = today.toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+
+// Default leads from Trevor's outreach
+const DEFAULT_LEADS = [
+  {id:1,name:"Glow Aesthetics",ig:"@glowaesthetics",loc:"Atlanta, GA",weakness:"low_engagement",status:"dm_sent",dmDate:"2026-02-23",followUpDate:"2026-02-27",notes:"5k followers, poor engagement rate",responses:[]},
+  {id:2,name:"Radiant Skin Studio",ig:"@radiantskin",loc:"Miami, FL",weakness:"no_booking",status:"dm_sent",dmDate:"2026-02-23",followUpDate:"2026-02-27",notes:"No online booking system",responses:[]},
+  {id:3,name:"Pure Glow Med Spa",ig:"@pureglow",loc:"Dallas, TX",weakness:"bad_website",status:"dm_sent",dmDate:"2026-02-23",followUpDate:"2026-02-27",notes:"Website looks outdated",responses:[]},
+  {id:4,name:"Elite Aesthetics",ig:"@eliteaesthetics",loc:"LA, CA",weakness:"generic_content",status:"dm_sent",dmDate:"2026-02-23",followUpDate:"2026-02-27",notes:"Stock photos, no personality",responses:[]},
+  {id:5,name:"Luxe Body Clinic",ig:"@luxebody",loc:"Houston, TX",weakness:"inconsistent_posting",status:"dm_sent",dmDate:"2026-02-23",followUpDate:"2026-02-27",notes:"Posts once a month",responses:[]},
+  {id:6,name:"Bloom MedSpa",ig:"@bloommedspa",loc:"Chicago, IL",weakness:"no_reviews",status:"dm_sent",dmDate:"2026-02-24",followUpDate:"2026-02-28",notes:"Only 3 Google reviews",responses:[]},
+  {id:7,name:"Skin Refinery",ig:"@skinrefinery",loc:"Phoenix, AZ",weakness:"low_engagement",status:"dm_sent",dmDate:"2026-02-24",followUpDate:"2026-02-28",notes:"8k followers, 0.5% engagement",responses:[]},
+  {id:8,name:"Vitality Aesthetics",ig:"@vitalityaes",loc:"Denver, CO",weakness:"no_email",status:"dm_sent",dmDate:"2026-02-24",followUpDate:"2026-02-28",notes:"No email capture on site",responses:[]},
+  {id:9,name:"Aura Skin Lab",ig:"@auraskinlab",loc:"Nashville, TN",weakness:"no_booking",status:"dm_sent",dmDate:"2026-02-24",followUpDate:"2026-02-28",notes:"Phone-only booking",responses:[]},
+  {id:10,name:"Zenith MedSpa",ig:"@zenithmed",loc:"Portland, OR",weakness:"bad_website",status:"dm_sent",dmDate:"2026-02-24",followUpDate:"2026-02-28",notes:"Broken mobile site",responses:[]},
+  {id:11,name:"Nova Beauty Bar",ig:"@novabeauty",loc:"Austin, TX",weakness:"generic_content",status:"dm_sent",dmDate:"2026-02-24",followUpDate:"2026-02-28",notes:"Reposts only",responses:[]},
+  {id:12,name:"Revive Clinic",ig:"@reviveclinic",loc:"San Diego, CA",weakness:"inconsistent_posting",status:"dm_sent",dmDate:"2026-02-24",followUpDate:"2026-02-28",notes:"2 posts in 3 months",responses:[]},
+  {id:13,name:"Lush Skin Co",ig:"@lushskin",loc:"Charlotte, NC",weakness:"low_engagement",status:"dm_sent",dmDate:"2026-02-24",followUpDate:"2026-02-28",notes:"Bought followers likely",responses:[]},
+  {id:14,name:"Drift Aesthetics",ig:"@driftaes",loc:"Seattle, WA",weakness:"no_booking",status:"dm_sent",dmDate:"2026-02-25",followUpDate:"2026-02-28",notes:"DM to book only",responses:[]},
+  {id:15,name:"Ivy Med Spa",ig:"@ivymedspa",loc:"Boston, MA",weakness:"no_reviews",status:"dm_sent",dmDate:"2026-02-25",followUpDate:"2026-02-28",notes:"No Yelp/Google presence",responses:[]},
+  {id:16,name:"Sculpt Studio",ig:"@sculptstudio",loc:"Scottsdale, AZ",weakness:"bad_website",status:"dm_sent",dmDate:"2026-02-25",followUpDate:"2026-02-28",notes:"No SSL, slow load",responses:[]},
+  {id:17,name:"Pearl Skin Clinic",ig:"@pearlskin",loc:"Tampa, FL",weakness:"no_email",status:"dm_sent",dmDate:"2026-02-25",followUpDate:"2026-02-28",notes:"Missing lead capture entirely",responses:[]},
+  {id:18,name:"Velvet Touch Med",ig:"@velvettouchmed",loc:"Las Vegas, NV",weakness:"generic_content",status:"dm_sent",dmDate:"2026-02-25",followUpDate:"2026-02-28",notes:"Template captions",responses:[]},
+  {id:19,name:"Clarity Aesthetics",ig:"@clarityaes",loc:"Raleigh, NC",weakness:"low_engagement",status:"dm_sent",dmDate:"2026-02-25",followUpDate:"2026-02-28",notes:"Good content, no engagement strategy",responses:[]}
+];
+
+let leads = JSON.parse(localStorage.getItem(STORAGE_KEY)) || DEFAULT_LEADS;
+let currentFilter = 'all';
+
+const WEAKNESS_LABELS = {
+  low_engagement:"Low Engagement",no_booking:"No Online Booking",bad_website:"Weak Website",
+  no_reviews:"Few Reviews",inconsistent_posting:"Inconsistent Posting",no_email:"No Email Marketing",generic_content:"Generic Content"
+};
+
+const FOLLOWUP_TEMPLATES = {
+  soft_followup: (lead) => `Hey! 👋 Just wanted to follow up on my message from a few days ago. I noticed ${lead.name} has amazing potential — I had a couple of specific ideas about how AI-powered booking could help you capture more appointments without extra work on your end.\n\nWould love to share a quick 2-min demo if you're curious! No pressure at all 🙏`,
+  value_add: (lead) => `Quick tip for ${lead.name} — I just helped a med spa in ${lead.loc.split(',')[0]} increase their booking rate by 40% with a simple AI chatbot on their website. Happy to show you exactly how it works, takes literally 2 minutes.\n\nEither way, love what you're building! 💪`,
+  case_study: (lead) => `Hey! I put together a quick case study showing how med spas like ${lead.name} are using AI to automate bookings and follow-ups. The results are pretty wild — one clinic went from 15 to 45 bookings/week.\n\nWant me to send it over? It's a 1-page breakdown, super quick read.`,
+  breakup: (lead) => `Hey! I know you're super busy running ${lead.name}, so I'll keep this short — this will be my last message.\n\nI genuinely think there's an opportunity to grow your bookings with some simple AI automation. If the timing is ever right, I'm here.\n\nWishing you guys an amazing month! 🚀`,
+  custom: (lead) => ''
+};
+
+function daysBetween(d1, d2) {
+  const a = new Date(d1); a.setHours(0,0,0,0);
+  const b = new Date(d2); b.setHours(0,0,0,0);
+  return Math.round((b - a) / 86400000);
+}
+
+function getLeadUrgency(lead) {
+  if (lead.status === 'responded' || lead.status === 'booked') return 'responded';
+  const fu = new Date(lead.followUpDate); fu.setHours(0,0,0,0);
+  const diff = daysBetween(today, fu);
+  if (diff < 0) return 'overdue';
+  if (diff === 0) return 'today';
+  return 'upcoming';
+}
+
+function renderStats() {
+  const overdue = leads.filter(l => getLeadUrgency(l) === 'overdue').length;
+  const todayCount = leads.filter(l => getLeadUrgency(l) === 'today').length;
+  const responded = leads.filter(l => l.status === 'responded' || l.status === 'booked').length;
+  const ghosted = leads.filter(l => l.status === 'dm_sent' && daysBetween(new Date(l.dmDate), today) > 5).length;
+  const rate = leads.length ? Math.round(responded / leads.length * 100) : 0;
+
+  document.getElementById('statsBar').innerHTML = `
+    <div class="stat-card urgent"><div class="num">${overdue}</div><div class="label">OVERDUE</div></div>
+    <div class="stat-card warning"><div class="num">${todayCount}</div><div class="label">DUE TODAY</div></div>
+    <div class="stat-card good"><div class="num">${responded}</div><div class="label">RESPONDED</div></div>
+    <div class="stat-card info"><div class="num">${leads.length}</div><div class="label">TOTAL LEADS</div></div>
+    <div class="stat-card ${rate > 10 ? 'good' : 'warning'}"><div class="num">${rate}%</div><div class="label">RESPONSE RATE</div></div>
+    <div class="stat-card ${ghosted > 10 ? 'urgent' : 'info'}"><div class="num">${ghosted}</div><div class="label">NO REPLY (5d+)</div></div>
+  `;
+}
+
+function renderLeads() {
+  const container = document.getElementById('leadsList');
+  let filtered = [...leads];
+  
+  if (currentFilter === 'overdue') filtered = filtered.filter(l => getLeadUrgency(l) === 'overdue');
+  else if (currentFilter === 'today') filtered = filtered.filter(l => getLeadUrgency(l) === 'today');
+  else if (currentFilter === 'responded') filtered = filtered.filter(l => l.status === 'responded' || l.status === 'booked');
+  else if (currentFilter === 'ghosted') filtered = filtered.filter(l => l.status === 'dm_sent' && daysBetween(new Date(l.dmDate), today) > 5);
+
+  // Sort: overdue first, then today, then upcoming
+  const order = {overdue:0,today:1,upcoming:2,responded:3};
+  filtered.sort((a,b) => (order[getLeadUrgency(a)]||9) - (order[getLeadUrgency(b)]||9));
+
+  if (!filtered.length) {
+    container.innerHTML = '<div class="empty-state">No leads match this filter 🎉</div>';
+    return;
+  }
+
+  container.innerHTML = filtered.map(lead => {
+    const urgency = getLeadUrgency(lead);
+    const daysSinceDM = daysBetween(new Date(lead.dmDate), today);
+    const badgeClass = urgency === 'overdue' ? 'badge-overdue' : urgency === 'today' ? 'badge-today' : urgency === 'responded' ? 'badge-responded' : 'badge-upcoming';
+    const badgeText = urgency === 'overdue' ? `${Math.abs(daysBetween(today, new Date(lead.followUpDate)))}d overdue` : urgency === 'today' ? 'Due today' : urgency === 'responded' ? '✓ Responded' : `Due ${lead.followUpDate}`;
+    
+    // Pick template based on days since DM
+    let suggestedTemplate = 'soft_followup';
+    if (daysSinceDM >= 14) suggestedTemplate = 'breakup';
+    else if (daysSinceDM >= 7) suggestedTemplate = 'case_study';
+    else if (daysSinceDM >= 4) suggestedTemplate = 'value_add';
+    
+    const msg = FOLLOWUP_TEMPLATES[suggestedTemplate](lead);
+
+    return `
+      <div class="lead-item" data-id="${lead.id}">
+        <div style="display:flex;justify-content:space-between;align-items:start">
+          <div>
+            <div class="lead-name">${lead.name} <span style="color:var(--muted);font-weight:400">${lead.ig}</span></div>
+            <div class="lead-meta">${lead.loc} · ${WEAKNESS_LABELS[lead.weakness]} · DM'd ${daysSinceDM}d ago</div>
+          </div>
+          <span class="badge ${badgeClass}">${badgeText}</span>
+        </div>
+        ${lead.notes ? `<div class="lead-meta" style="margin-top:6px">📝 ${lead.notes}</div>` : ''}
+        <div class="lead-actions">
+          ${lead.status !== 'responded' && lead.status !== 'booked' ? `
+            <button class="btn btn-primary btn-sm" onclick="toggleMsg(${lead.id})">📝 View Follow-Up</button>
+            <button class="btn btn-success btn-sm" onclick="markResponded(${lead.id})">✅ Responded</button>
+            <button class="btn btn-outline btn-sm" onclick="snooze(${lead.id})">⏰ Snooze 3d</button>
+          ` : `
+            <button class="btn btn-success btn-sm" onclick="markBooked(${lead.id})">📅 Mark Booked</button>
+            <button class="btn btn-outline btn-sm" onclick="logResponse(${lead.id})">💬 Log Response</button>
+          `}
+        </div>
+        <div class="message-preview" id="msg-${lead.id}">
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+            <select onchange="changeTemplate(${lead.id},this.value)" style="background:var(--card);border:1px solid var(--border);border-radius:6px;padding:4px 8px;color:var(--text);font-size:.8rem">
+              <option value="soft_followup" ${suggestedTemplate==='soft_followup'?'selected':''}>Soft Follow-Up</option>
+              <option value="value_add" ${suggestedTemplate==='value_add'?'selected':''}>Value Add</option>
+              <option value="case_study" ${suggestedTemplate==='case_study'?'selected':''}>Case Study</option>
+              <option value="breakup" ${suggestedTemplate==='breakup'?'selected':''}>Breakup Message</option>
+              <option value="custom">Custom</option>
+            </select>
+            <button class="btn btn-primary btn-sm" onclick="copyMsg(${lead.id})">📋 Copy</button>
+          </div>
+          <textarea id="textarea-${lead.id}" rows="5">${msg}</textarea>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function toggleMsg(id) {
+  const el = document.getElementById(`msg-${id}`);
+  el.classList.toggle('show');
+}
+
+function changeTemplate(id, template) {
+  const lead = leads.find(l => l.id === id);
+  const textarea = document.getElementById(`textarea-${id}`);
+  textarea.value = FOLLOWUP_TEMPLATES[template](lead);
+}
+
+function copyMsg(id) {
+  const textarea = document.getElementById(`textarea-${id}`);
+  navigator.clipboard.writeText(textarea.value);
+  const toast = document.getElementById('copyToast');
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2000);
+}
+
+function markResponded(id) {
+  const lead = leads.find(l => l.id === id);
+  lead.status = 'responded';
+  lead.respondedDate = new Date().toISOString().slice(0,10);
+  save(); render();
+}
+
+function markBooked(id) {
+  const lead = leads.find(l => l.id === id);
+  lead.status = 'booked';
+  save(); render();
+}
+
+function snooze(id) {
+  const lead = leads.find(l => l.id === id);
+  const fu = new Date(lead.followUpDate || today);
+  fu.setDate(fu.getDate() + 3);
+  lead.followUpDate = fu.toISOString().slice(0,10);
+  save(); render();
+}
+
+function logResponse(id) {
+  const note = prompt('What did they say?');
+  if (!note) return;
+  const lead = leads.find(l => l.id === id);
+  lead.responses = lead.responses || [];
+  lead.responses.push({date: new Date().toISOString().slice(0,10), text: note});
+  save(); render();
+}
+
+function setFilter(f, el) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  renderLeads();
+}
+
+function showAddLead() { document.getElementById('addLeadModal').classList.add('show'); }
+function closeModal() { document.getElementById('addLeadModal').classList.remove('show'); }
+
+function addLead() {
+  const name = document.getElementById('newName').value.trim();
+  if (!name) return;
+  leads.push({
+    id: Date.now(), name,
+    ig: document.getElementById('newIG').value.trim(),
+    loc: document.getElementById('newLoc').value.trim(),
+    weakness: document.getElementById('newWeakness').value,
+    status: 'new',
+    dmDate: new Date().toISOString().slice(0,10),
+    followUpDate: new Date(Date.now() + 3*86400000).toISOString().slice(0,10),
+    notes: document.getElementById('newNotes').value.trim(),
+    responses: []
+  });
+  save(); render(); closeModal();
+  ['newName','newIG','newLoc','newNotes'].forEach(id => document.getElementById(id).value = '');
+}
+
+function renderPipeline() {
+  const stages = {new:0, dm_sent:0, responded:0, booked:0, closed:0};
+  leads.forEach(l => stages[l.status] = (stages[l.status]||0) + 1);
+  const labels = {new:'🆕 New',dm_sent:'📤 DM Sent',responded:'💬 Responded',booked:'📅 Booked',closed:'🎉 Closed'};
+  const colors = {new:'var(--muted)',dm_sent:'var(--blue)',responded:'var(--yellow)',booked:'var(--green)',closed:'var(--accent)'};
+  
+  document.getElementById('pipelineHealth').innerHTML = Object.entries(labels).map(([key, label]) => {
+    const count = stages[key] || 0;
+    const pct = leads.length ? (count / leads.length * 100) : 0;
+    return `
+      <div style="margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;font-size:.9rem">
+          <span>${label}</span><span style="font-weight:700">${count}</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${colors[key]}"></div></div>
+      </div>
+    `;
+  }).join('');
+}
+
+function exportData() {
+  const csv = ['Name,Instagram,Location,Weakness,Status,DM Date,Follow-Up Date,Notes'];
+  leads.forEach(l => csv.push(`"${l.name}","${l.ig}","${l.loc}","${l.weakness}","${l.status}","${l.dmDate}","${l.followUpDate}","${l.notes}"`));
+  const blob = new Blob([csv.join('\n')], {type:'text/csv'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'followup-leads.csv'; a.click();
+}
+
+function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(leads)); }
+function render() { renderStats(); renderLeads(); renderPipeline(); }
+
+render();
+</script>
+</body>
+</html>
