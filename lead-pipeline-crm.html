@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Med Spa Lead Pipeline CRM</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0a0a0f;--card:#13131a;--border:#1e1e2e;--text:#e0e0e0;--dim:#888;--accent:#6c5ce7;--green:#00b894;--yellow:#fdcb6e;--orange:#e17055;--red:#d63031;--blue:#0984e3;--purple:#a29bfe}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.header{background:linear-gradient(135deg,#1a1a2e,#16213e);padding:20px 24px;border-bottom:1px solid var(--border)}
+.header h1{font-size:1.5rem;margin-bottom:4px}
+.header p{color:var(--dim);font-size:.85rem}
+.stats-bar{display:flex;gap:12px;padding:16px 24px;flex-wrap:wrap}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 18px;flex:1;min-width:130px;text-align:center}
+.stat .num{font-size:1.8rem;font-weight:700}
+.stat .label{font-size:.75rem;color:var(--dim);text-transform:uppercase;margin-top:2px}
+.stat.green .num{color:var(--green)}.stat.yellow .num{color:var(--yellow)}.stat.orange .num{color:var(--orange)}.stat.blue .num{color:var(--blue)}.stat.purple .num{color:var(--purple)}.stat.red .num{color:var(--red)}
+
+.controls{padding:12px 24px;display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.controls input,.controls select{background:var(--card);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:6px;font-size:.85rem}
+.controls input{flex:1;min-width:200px}
+.controls select{min-width:140px}
+.btn{background:var(--accent);color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:.85rem;font-weight:600;transition:.2s}
+.btn:hover{opacity:.85}
+.btn.sm{padding:4px 10px;font-size:.75rem}
+.btn.green{background:var(--green)}.btn.red{background:var(--red)}.btn.yellow{background:#b2912f}.btn.blue{background:var(--blue)}
+.btn.outline{background:transparent;border:1px solid var(--border);color:var(--dim)}
+.btn.outline:hover{border-color:var(--accent);color:var(--accent)}
+
+.tabs{display:flex;gap:0;padding:0 24px;border-bottom:1px solid var(--border)}
+.tab{padding:10px 20px;cursor:pointer;color:var(--dim);font-size:.85rem;border-bottom:2px solid transparent;transition:.2s}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab:hover{color:var(--text)}
+
+.view{padding:16px 24px;display:none}
+.view.active{display:block}
+
+/* Pipeline Kanban */
+.pipeline{display:flex;gap:12px;overflow-x:auto;padding-bottom:16px}
+.column{min-width:260px;max-width:300px;flex:1;background:var(--card);border:1px solid var(--border);border-radius:10px;display:flex;flex-direction:column;max-height:70vh}
+.col-header{padding:12px;font-weight:700;font-size:.85rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:var(--card);border-radius:10px 10px 0 0}
+.col-header .count{background:var(--border);padding:2px 8px;border-radius:10px;font-size:.75rem;color:var(--dim)}
+.col-cards{padding:8px;overflow-y:auto;flex:1}
+.lead-card{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:8px;cursor:pointer;transition:.2s}
+.lead-card:hover{border-color:var(--accent)}
+.lead-card .name{font-weight:600;font-size:.85rem;margin-bottom:4px}
+.lead-card .handle{color:var(--accent);font-size:.75rem}
+.lead-card .meta{display:flex;justify-content:space-between;margin-top:6px;font-size:.7rem;color:var(--dim)}
+.lead-card .priority{font-size:.65rem;padding:2px 6px;border-radius:4px;font-weight:600}
+.priority.HIGH{background:rgba(214,48,49,.2);color:var(--red)}.priority.MEDIUM{background:rgba(253,203,110,.2);color:var(--yellow)}.priority.LOW{background:rgba(99,110,114,.2);color:var(--dim)}
+
+/* Table View */
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.8rem}
+th{background:var(--card);padding:10px;text-align:left;border-bottom:1px solid var(--border);color:var(--dim);font-size:.7rem;text-transform:uppercase;position:sticky;top:0}
+td{padding:8px 10px;border-bottom:1px solid var(--border)}
+tr:hover{background:rgba(108,92,231,.05)}
+.status-badge{padding:3px 8px;border-radius:4px;font-size:.7rem;font-weight:600;white-space:nowrap}
+.status-badge.new{background:rgba(9,132,227,.15);color:var(--blue)}
+.status-badge.contacted{background:rgba(253,203,110,.15);color:var(--yellow)}
+.status-badge.responded{background:rgba(0,184,148,.15);color:var(--green)}
+.status-badge.meeting{background:rgba(108,92,231,.15);color:var(--purple)}
+.status-badge.closed{background:rgba(0,184,148,.3);color:#fff}
+.status-badge.lost{background:rgba(214,48,49,.15);color:var(--red)}
+
+/* Detail Modal */
+.modal-bg{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.7);z-index:100;display:none;justify-content:center;align-items:center;padding:20px}
+.modal-bg.open{display:flex}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:12px;width:100%;max-width:600px;max-height:85vh;overflow-y:auto;padding:24px}
+.modal h2{font-size:1.1rem;margin-bottom:4px}
+.modal .handle{color:var(--accent);font-size:.85rem;margin-bottom:16px;display:block}
+.form-group{margin-bottom:14px}
+.form-group label{display:block;font-size:.75rem;color:var(--dim);margin-bottom:4px;text-transform:uppercase}
+.form-group select,.form-group input,.form-group textarea{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:8px;border-radius:6px;font-size:.85rem}
+.form-group textarea{height:80px;resize:vertical;font-family:inherit}
+.form-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+
+/* Activity Log */
+.activity{margin-top:16px;border-top:1px solid var(--border);padding-top:12px}
+.activity h3{font-size:.85rem;margin-bottom:8px}
+.activity-item{display:flex;gap:8px;padding:6px 0;font-size:.8rem;border-bottom:1px solid rgba(30,30,46,.5)}
+.activity-item .time{color:var(--dim);white-space:nowrap;font-size:.7rem;min-width:80px}
+.add-activity{display:flex;gap:8px;margin-top:8px}
+.add-activity input{flex:1;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:6px;font-size:.8rem}
+
+/* Follow-up View */
+.followup-list{display:flex;flex-direction:column;gap:8px}
+.followup-item{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px;display:flex;justify-content:space-between;align-items:center}
+.followup-item.overdue{border-color:var(--red)}
+.followup-item.today{border-color:var(--yellow)}
+.followup-item .info{flex:1}
+.followup-item .name{font-weight:600;font-size:.9rem}
+.followup-item .due{font-size:.75rem;color:var(--dim)}
+.followup-item .due.overdue{color:var(--red)}
+.followup-item .due.today{color:var(--yellow)}
+
+/* Analytics */
+.chart-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px}
+.chart-card h3{font-size:.85rem;margin-bottom:12px;color:var(--dim)}
+.bar-chart{display:flex;align-items:flex-end;gap:8px;height:150px}
+.bar{flex:1;background:var(--accent);border-radius:4px 4px 0 0;min-width:30px;position:relative;transition:.3s}
+.bar .val{position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:.7rem;color:var(--dim)}
+.bar .lbl{position:absolute;bottom:-18px;left:50%;transform:translateX(-50%);font-size:.6rem;color:var(--dim);white-space:nowrap}
+.funnel{display:flex;flex-direction:column;gap:4px}
+.funnel-row{display:flex;align-items:center;gap:12px}
+.funnel-bar{height:28px;border-radius:4px;display:flex;align-items:center;padding:0 10px;font-size:.75rem;font-weight:600;color:#fff;transition:.3s}
+
+/* Data management */
+.data-section{padding:16px;background:var(--card);border:1px solid var(--border);border-radius:10px;margin-top:16px}
+.data-section h3{margin-bottom:8px;font-size:.9rem}
+.data-section p{color:var(--dim);font-size:.8rem;margin-bottom:12px}
+
+@media(max-width:768px){
+.pipeline{flex-direction:column}.column{min-width:100%;max-width:100%;max-height:none}
+.stats-bar{gap:8px}.stat{min-width:100px;padding:10px}
+.modal{margin:10px}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+<h1>🏥 Med Spa Lead Pipeline CRM</h1>
+<p>Track outreach, follow-ups, and conversions — all 49 leads in one place</p>
+</div>
+
+<div class="stats-bar" id="statsBar"></div>
+
+<div class="tabs">
+<div class="tab active" data-view="pipeline">📊 Pipeline</div>
+<div class="tab" data-view="table">📋 All Leads</div>
+<div class="tab" data-view="followups">⏰ Follow-ups</div>
+<div class="tab" data-view="analytics">📈 Analytics</div>
+<div class="tab" data-view="data">💾 Data</div>
+</div>
+
+<div class="controls">
+<input type="text" id="search" placeholder="Search leads by name, handle, city...">
+<select id="filterPriority"><option value="">All Priorities</option><option>HIGH</option><option>MEDIUM</option><option>LOW</option></select>
+<select id="filterCity"><option value="">All Cities</option></select>
+<button class="btn" onclick="exportData()">📥 Export JSON</button>
+<button class="btn green" onclick="importData()">📤 Import</button>
+</div>
+
+<div class="view active" id="pipeline"><div class="pipeline" id="pipelineView"></div></div>
+<div class="view" id="table"><div class="table-wrap" id="tableView"></div></div>
+<div class="view" id="followups"><div class="followup-list" id="followupView"></div></div>
+<div class="view" id="analytics"><div class="chart-grid" id="analyticsView"></div></div>
+<div class="view" id="data" style="max-width:700px">
+<div class="data-section">
+<h3>💾 Data Persistence</h3>
+<p>All data is saved to localStorage automatically. Export regularly as backup.</p>
+<button class="btn" onclick="exportData()" style="margin-right:8px">📥 Export Full Backup</button>
+<button class="btn red" onclick="if(confirm('Reset ALL data to defaults?')){localStorage.removeItem('medspa_crm_data');location.reload()}">🗑️ Reset to Defaults</button>
+</div>
+<div class="data-section">
+<h3>📊 Quick Stats</h3>
+<p id="dataStats"></p>
+</div>
+</div>
+
+<div class="modal-bg" id="modalBg" onclick="if(event.target===this)closeModal()">
+<div class="modal" id="modal"></div>
+</div>
+
+<input type="file" id="fileInput" style="display:none" accept=".json" onchange="handleImport(event)">
+
+<script>
+const STATUSES = ['new','contacted','responded','meeting','closed','lost'];
+const STATUS_LABELS = {new:'🆕 New Lead',contacted:'📤 Contacted',responded:'💬 Responded',meeting:'📅 Meeting Set',closed:'✅ Closed Won',lost:'❌ Lost'};
+const STATUS_COLORS = {new:'var(--blue)',contacted:'var(--yellow)',responded:'var(--green)',meeting:'var(--purple)',closed:'#00b894',lost:'var(--red)'};
+
+// All 49 leads from CSV
+const DEFAULT_LEADS = [
+{id:1,name:"Pure Bliss Med Spa",handle:"@pureblissmedspa",followers:40000,city:"Atlanta",website:"pureblissmedspa.com",score:9,priority:"HIGH",issues:"Weak headline, unclear value prop, missing urgency, weak CTAs"},
+{id:2,name:"Ecobel Atlanta",handle:"@ecobelmedspa",followers:21000,city:"Atlanta",website:"ecobelmedspa.com",score:8,priority:"HIGH",issues:"Missing testimonials above fold, weak patient story, dry captions"},
+{id:3,name:"Glow Med Spa NYC",handle:"@glamglowmedspa",followers:26000,city:"NYC",website:"glamglowmedspa.com",score:7.5,priority:"HIGH",issues:"Vague descriptions, weak headlines, limited educational content"},
+{id:4,name:"Cheeky Denver",handle:"@cheekydenver",followers:15000,city:"Denver",website:"cheekydendermedspa.com",score:7,priority:"MEDIUM",issues:"Playful but doesn't convert, missing treatment outcomes"},
+{id:5,name:"RESTOR Denver",handle:"@restormedicalspa",followers:15000,city:"Denver",website:"restormedicalspa.com",score:6.5,priority:"MEDIUM",issues:"Missing differentiator, vague messaging"},
+{id:6,name:"VIO Med Spa National",handle:"@viomedspa",followers:13000,city:"National",website:"viomedspa.com",score:6,priority:"MEDIUM",issues:"Corporate feel, weak local branding"},
+{id:7,name:"Novopelle Dallas",handle:"@novopelle",followers:14000,city:"Dallas",website:"novopelle.com",score:6.5,priority:"MEDIUM",issues:"Weak headline, unclear services"},
+{id:8,name:"Avana Wellness Miami",handle:"@avana_wellness",followers:76000,city:"Miami",website:"avanawellnessplus.com",score:7,priority:"MEDIUM",issues:"Good name but dry copy, weak headlines"},
+{id:9,name:"BeautyFix MedSpa NYC",handle:"@beautyfixmedspa",followers:147000,city:"NYC",website:"getbeautyfix.com",score:6,priority:"MEDIUM",issues:"Corporate tone, weak local connection"},
+{id:10,name:"Refresh Medical Spa",handle:"@refreshmedspa",followers:4300,city:"Kansas City",website:"refreshmedspaonline.com",score:7,priority:"HIGH",issues:"Weak headline, missing before/after above fold"},
+{id:11,name:"HL Med Spa",handle:"@hlmedspa.official",followers:16000,city:"New Jersey",website:"hlmedspa.com",score:6.5,priority:"MEDIUM",issues:"Unclear value prop, weak headlines"},
+{id:12,name:"DVIDA Chicago",handle:"@dvidamedspa_chicago",followers:6277,city:"Chicago",website:"dvidamedspa.com",score:6.5,priority:"MEDIUM",issues:"Needs proof for claims, weak CTAs"},
+{id:13,name:"Miami Lakes Med Spa",handle:"@miamilakesmedspa",followers:8921,city:"Miami",website:"miamilakesmedspa.com",score:7,priority:"MEDIUM",issues:"Missing value prop, weak headlines"},
+{id:14,name:"The Med Spa Boutique",handle:"@themedspaboutique",followers:11000,city:"San Diego",website:"themedspaboutique.com",score:6.5,priority:"MEDIUM",issues:"Vague positioning, weak benefit statements"},
+{id:15,name:"Ovation Med Spa",handle:"@ovationmedspa",followers:9828,city:"Houston",website:"ovationmedspa.com",score:7,priority:"HIGH",issues:"Award claim needs proof, weak before/after"},
+{id:16,name:"Bella Santé Boston",handle:"@bellasantespas",followers:8000,city:"Boston",website:"bellasantespas.com",score:6,priority:"MEDIUM",issues:"30 years heritage needs modernization"},
+{id:17,name:"Skin Spa by Dr. Kia",handle:"@drkiashakib",followers:29000,city:"LA",website:"skinspabydrkia.com",score:7,priority:"MEDIUM",issues:"Doctor cred not leveraged in copy"},
+{id:18,name:"Spoke Med Spa",handle:"@spokenmedspa",followers:3729,city:"Atlanta",website:"spokenmedspa.com",score:6.5,priority:"MEDIUM",issues:"Unclear focus, weak differentiation"},
+{id:19,name:"SOM Aesthetics",handle:"@som.aesthetics",followers:8065,city:"San Diego",website:"somaesthetics.com",score:6,priority:"MEDIUM",issues:"Good tagline but vague copy"},
+{id:20,name:"Fancy Beauty Med Spa",handle:"@fancybeautymedspa",followers:6660,city:"LA",website:"fancybeautymedspa.com",score:6.5,priority:"MEDIUM",issues:"Weak headline, missing social proof"},
+{id:21,name:"Magical Med Spa",handle:"@magicalmedspa_",followers:4205,city:"Miami",website:"magicalmedspa.com",score:6.5,priority:"MEDIUM",issues:"Spanish/English niche, weak hero CTA"},
+{id:22,name:"Trifecta Med Spa",handle:"@trifectamedspa",followers:7904,city:"NYC",website:"trifectamedspa.com",score:6.5,priority:"MEDIUM",issues:"14 years claim needs proof"},
+{id:23,name:"TREAT MedSpa NYC",handle:"@treatmedspaofficial",followers:5331,city:"NYC",website:"treatmedspa.com",score:6,priority:"MEDIUM",issues:"Weak positioning, vague benefits"},
+{id:24,name:"Best You MedSpa",handle:"@bestyoumedspa",followers:22000,city:"Boston",website:"bestyoumedspa.com",score:7,priority:"HIGH",issues:"Good injector angle but lacks personality"},
+{id:25,name:"Glow Medispa Seattle",handle:"@glow.medispa",followers:2106,city:"Seattle",website:"glowmedispa.com",score:6.5,priority:"MEDIUM",issues:"Regional claim weak, missing hero CTA"},
+{id:26,name:"BHRC Houston",handle:"@bhrchouston",followers:7340,city:"Houston",website:"bhrchouston.com",score:6.5,priority:"MEDIUM",issues:"Clinical branding, dry copy"},
+{id:27,name:"Rejuve LA",handle:"@rejuveclinics",followers:12000,city:"LA",website:"rejuvelaclinics.com",score:5.5,priority:"LOW",issues:"Only 103 posts - essentially inactive"},
+{id:28,name:"VIO Boston",handle:"@viomedspa_boston",followers:2941,city:"Boston",website:"viomedspa.com/boston",score:5.5,priority:"MEDIUM",issues:"Chain branding dilutes local presence"},
+{id:29,name:"Angel Face Injections",handle:"@angelfaceinjections",followers:2735,city:"Boston",website:"angelfaceinjections.com",score:6,priority:"MEDIUM",issues:"Strong lip niche but weak overall copy"},
+{id:30,name:"ANSO Med Spa NYC",handle:"@anso.nyc",followers:10000,city:"NYC",website:"ansonycmedspa.com",score:6,priority:"MEDIUM",issues:"Family-owned angle underutilized"},
+{id:31,name:"Concierge Med Spa",handle:"@conciergemedspa",followers:5477,city:"Chicago",website:"conciergemedspausa.com",score:6,priority:"MEDIUM",issues:"Concierge angle is good but generic copy"},
+{id:32,name:"Lux Med Spa Atlanta",handle:"@luxmedspaatlanta",followers:2659,city:"Atlanta",website:"luxmedspa.com",score:6,priority:"MEDIUM",issues:"Weak headline, missing social proof"},
+{id:33,name:"Beauty At First Sight",handle:"@bafsmedspa",followers:2096,city:"Chicago",website:"bafsmedspa.com",score:6,priority:"MEDIUM",issues:"Doctor-led angle underutilized"},
+{id:34,name:"Misty Med Spa",handle:"@mistymedspa",followers:3243,city:"Atlanta",website:"mistymedspa.com",score:7,priority:"MEDIUM",issues:"25+ years derm experience underutilized"},
+{id:35,name:"Brickell Cosmetic Center",handle:"@bcc_miami",followers:3076,city:"Miami",website:"brickellcosmeticcenter.com",score:6,priority:"MEDIUM",issues:"15+ years positioning, vague copy"},
+{id:36,name:"Vintage Wellness",handle:"@vintagewellness",followers:2364,city:"Houston",website:"vintagewellnessspsa.com",score:6,priority:"MEDIUM",issues:"Vague luxury positioning"},
+{id:37,name:"Master Face Med Spa",handle:"@masterfacemedspa",followers:9293,city:"Miami",website:"masterfacemedspa.com",score:7,priority:"MEDIUM",issues:"Clinical copy, missing emotional connection"},
+{id:38,name:"B Medical Spa",handle:"@bmedspa",followers:5702,city:"San Diego",website:"bmedicalspasandiego.com",score:7,priority:"MEDIUM",issues:"Double-board cert underutilized"},
+{id:39,name:"Radiance Wellness",handle:"@radiance.well",followers:2485,city:"San Diego",website:"radiancewellnesssd.com",score:6,priority:"MEDIUM",issues:"Weak headline, vague messaging"},
+{id:40,name:"Dr V's NY MedSpa",handle:"@drvsnymedspa",followers:13000,city:"NYC",website:"drvnymedspa.com",score:6.5,priority:"MEDIUM",issues:"FUE focus confuses service positioning"},
+{id:41,name:"San Diego Aesthetics",handle:"@sdamedspa",followers:2451,city:"San Diego",website:"sdaesthetics.com",score:6,priority:"MEDIUM",issues:"Catchy tagline but weak copy"},
+{id:42,name:"Skinsations Med Spa",handle:"@skinsationsmedspa",followers:11000,city:"Atlanta",website:"skinsationsmedspa.com",score:6,priority:"MEDIUM",issues:"Weak headline, generic copy"},
+{id:43,name:"Skin Suite Med Spa",handle:"@skinsuitemedspa",followers:5943,city:"Atlanta",website:"skinsuitemedspa.com",score:6,priority:"MEDIUM",issues:"Weak headline, missing pricing"},
+{id:44,name:"IN•GLO NYC",handle:"@inglo.medspa",followers:11000,city:"NYC",website:"inglomedispa.com",score:6.5,priority:"MEDIUM",issues:"Clear sculpting focus but weak copy"},
+{id:45,name:"GLODAY NYC",handle:"@glodaynyc",followers:1399,city:"NYC",website:"glodaynyc.com",score:5,priority:"MEDIUM",issues:"Only 121 posts - very low frequency"},
+{id:46,name:"AOB Med Spa",handle:"@aobmedspa",followers:94000,city:"Denver",website:"aobmedspa.com",score:6,priority:"MEDIUM",issues:"Above target but valuable market data"},
+{id:47,name:"Isles of Beauty",handle:"@islesofbeautymedspa",followers:2931,city:"San Diego",website:"islesofbeautymedspa.com",score:5,priority:"MEDIUM",issues:"Very low posting frequency (112 posts)"},
+{id:48,name:"The Houston Med Spa",handle:"@thehoustonmedspa",followers:1645,city:"Houston",website:"thehoustonmedspa.com",score:3,priority:"LOW",issues:"Only 42 posts - essentially inactive"},
+{id:49,name:"Glow Med Spa Houston",handle:"@glowmedspahouston",followers:2530,city:"Houston",website:"glowmedspahouston.com",score:3,priority:"LOW",issues:"Only 18 posts - critically inactive"}
+];
+
+// State
+let leads = [];
+const STORAGE_KEY = 'medspa_crm_data';
+
+function initLeads() {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (saved) {
+    leads = JSON.parse(saved);
+    // Merge any new default leads
+    DEFAULT_LEADS.forEach(dl => {
+      if (!leads.find(l => l.id === dl.id)) {
+        leads.push({...dl, status:'new', notes:'', followUpDate:'', activities:[], lastContact:'', dealValue:''});
+      }
+    });
+  } else {
+    leads = DEFAULT_LEADS.map(l => ({...l, status:'new', notes:'', followUpDate:'', activities:[], lastContact:'', dealValue:''}));
+  }
+  save();
+}
+
+function save() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(leads));
+}
+
+function getFiltered() {
+  const q = document.getElementById('search').value.toLowerCase();
+  const pri = document.getElementById('filterPriority').value;
+  const city = document.getElementById('filterCity').value;
+  return leads.filter(l => {
+    if (q && !`${l.name} ${l.handle} ${l.city}`.toLowerCase().includes(q)) return false;
+    if (pri && l.priority !== pri) return false;
+    if (city && l.city !== city) return false;
+    return true;
+  });
+}
+
+// Stats
+function renderStats() {
+  const counts = {};
+  STATUSES.forEach(s => counts[s] = 0);
+  leads.forEach(l => counts[l.status] = (counts[l.status]||0) + 1);
+  const total = leads.length;
+  const responseRate = total > 0 ? Math.round(((counts.responded+counts.meeting+counts.closed)/Math.max(counts.contacted+counts.responded+counts.meeting+counts.closed,1))*100) : 0;
+  const overdueCount = leads.filter(l => l.followUpDate && new Date(l.followUpDate) < new Date() && !['closed','lost'].includes(l.status)).length;
+  
+  document.getElementById('statsBar').innerHTML = `
+    <div class="stat blue"><div class="num">${total}</div><div class="label">Total Leads</div></div>
+    <div class="stat yellow"><div class="num">${counts.contacted}</div><div class="label">Contacted</div></div>
+    <div class="stat green"><div class="num">${counts.responded}</div><div class="label">Responded</div></div>
+    <div class="stat purple"><div class="num">${counts.meeting}</div><div class="label">Meetings</div></div>
+    <div class="stat green"><div class="num">${counts.closed}</div><div class="label">Closed</div></div>
+    <div class="stat orange"><div class="num">${responseRate}%</div><div class="label">Response Rate</div></div>
+    <div class="stat ${overdueCount>0?'red':''}"><div class="num">${overdueCount}</div><div class="label">Overdue</div></div>
+  `;
+}
+
+// Pipeline View
+function renderPipeline() {
+  const filtered = getFiltered();
+  const html = STATUSES.map(status => {
+    const inStatus = filtered.filter(l => l.status === status).sort((a,b) => b.score - a.score);
+    return `<div class="column">
+      <div class="col-header"><span>${STATUS_LABELS[status]}</span><span class="count">${inStatus.length}</span></div>
+      <div class="col-cards">${inStatus.map(l => `
+        <div class="lead-card" onclick="openModal(${l.id})" draggable="true" ondragstart="dragStart(event,${l.id})">
+          <div class="name">${l.name}</div>
+          <div class="handle">${l.handle}</div>
+          <div class="meta">
+            <span>${l.followers>=1000?(l.followers/1000).toFixed(l.followers>=10000?0:1)+'K':l.followers} followers</span>
+            <span class="priority ${l.priority}">${l.priority}</span>
+          </div>
+          ${l.followUpDate?`<div class="meta"><span style="color:${new Date(l.followUpDate)<new Date()?'var(--red)':'var(--dim)'}">📅 ${new Date(l.followUpDate).toLocaleDateString()}</span></div>`:''}
+        </div>
+      `).join('')}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('pipelineView').innerHTML = html;
+  
+  // Drop zones
+  document.querySelectorAll('.column').forEach((col, i) => {
+    col.ondragover = e => e.preventDefault();
+    col.ondrop = e => {
+      e.preventDefault();
+      const id = parseInt(e.dataTransfer.getData('text/plain'));
+      const lead = leads.find(l => l.id === id);
+      if (lead) {
+        const oldStatus = lead.status;
+        lead.status = STATUSES[i];
+        if (oldStatus !== lead.status) {
+          lead.activities = lead.activities || [];
+          lead.activities.push({time: new Date().toISOString(), text: `Status: ${STATUS_LABELS[oldStatus]} → ${STATUS_LABELS[lead.status]}`});
+          if (['contacted','responded','meeting'].includes(lead.status)) lead.lastContact = new Date().toISOString();
+        }
+        save(); renderAll();
+      }
+    };
+  });
+}
+
+let dragId = null;
+function dragStart(e, id) { e.dataTransfer.setData('text/plain', id); }
+
+// Table View
+function renderTable() {
+  const filtered = getFiltered();
+  document.getElementById('tableView').innerHTML = `<table>
+    <thead><tr><th>Name</th><th>Handle</th><th>City</th><th>Followers</th><th>Score</th><th>Priority</th><th>Status</th><th>Follow-up</th><th>Last Contact</th><th>Actions</th></tr></thead>
+    <tbody>${filtered.sort((a,b) => b.score - a.score).map(l => `<tr>
+      <td style="font-weight:600;cursor:pointer" onclick="openModal(${l.id})">${l.name}</td>
+      <td><a href="https://instagram.com/${l.handle.replace('@','')}" target="_blank" style="color:var(--accent)">${l.handle}</a></td>
+      <td>${l.city}</td>
+      <td>${l.followers>=1000?(l.followers/1000).toFixed(l.followers>=10000?0:1)+'K':l.followers}</td>
+      <td>${l.score}</td>
+      <td><span class="priority ${l.priority}">${l.priority}</span></td>
+      <td><span class="status-badge ${l.status}">${STATUS_LABELS[l.status].split(' ').slice(1).join(' ')}</span></td>
+      <td style="color:${l.followUpDate&&new Date(l.followUpDate)<new Date()?'var(--red)':'inherit'}">${l.followUpDate?new Date(l.followUpDate).toLocaleDateString():'-'}</td>
+      <td>${l.lastContact?timeAgo(l.lastContact):'-'}</td>
+      <td>
+        <select class="btn sm outline" onchange="quickStatus(${l.id},this.value);this.selectedIndex=0" style="font-size:.7rem;padding:2px 4px">
+          <option value="">Move →</option>
+          ${STATUSES.map(s=>`<option value="${s}">${STATUS_LABELS[s]}</option>`).join('')}
+        </select>
+      </td>
+    </tr>`).join('')}</tbody></table>`;
+}
+
+function quickStatus(id, status) {
+  if (!status) return;
+  const lead = leads.find(l => l.id === id);
+  if (lead) {
+    const old = lead.status;
+    lead.status = status;
+    lead.activities = lead.activities || [];
+    lead.activities.push({time: new Date().toISOString(), text: `Status: ${STATUS_LABELS[old]} → ${STATUS_LABELS[status]}`});
+    if (['contacted','responded','meeting'].includes(status)) lead.lastContact = new Date().toISOString();
+    save(); renderAll();
+  }
+}
+
+// Follow-ups
+function renderFollowups() {
+  const now = new Date();
+  const withDates = leads.filter(l => l.followUpDate && !['closed','lost'].includes(l.status))
+    .sort((a,b) => new Date(a.followUpDate) - new Date(b.followUpDate));
+  
+  if (!withDates.length) {
+    document.getElementById('followupView').innerHTML = '<p style="color:var(--dim);text-align:center;padding:40px">No follow-ups scheduled. Open a lead and set a follow-up date.</p>';
+    return;
+  }
+  
+  document.getElementById('followupView').innerHTML = withDates.map(l => {
+    const d = new Date(l.followUpDate);
+    const diff = Math.floor((d - now) / 86400000);
+    const cls = diff < 0 ? 'overdue' : diff === 0 ? 'today' : '';
+    const label = diff < 0 ? `${Math.abs(diff)}d overdue` : diff === 0 ? 'TODAY' : `in ${diff}d`;
+    return `<div class="followup-item ${cls}">
+      <div class="info">
+        <div class="name" style="cursor:pointer" onclick="openModal(${l.id})">${l.name} <span style="color:var(--accent);font-weight:400">${l.handle}</span></div>
+        <div class="due ${cls}">📅 ${d.toLocaleDateString()} — ${label}</div>
+        ${l.notes?`<div style="font-size:.75rem;color:var(--dim);margin-top:2px">${l.notes.substring(0,100)}</div>`:''}
+      </div>
+      <div style="display:flex;gap:6px">
+        <button class="btn sm" onclick="openModal(${l.id})">Open</button>
+        <button class="btn sm green" onclick="markContacted(${l.id})">✓ Done</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function markContacted(id) {
+  const lead = leads.find(l => l.id === id);
+  if (lead) {
+    lead.activities = lead.activities || [];
+    lead.activities.push({time: new Date().toISOString(), text: 'Follow-up completed'});
+    lead.lastContact = new Date().toISOString();
+    lead.followUpDate = '';
+    save(); renderAll();
+  }
+}
+
+// Analytics
+function renderAnalytics() {
+  const counts = {};
+  STATUSES.forEach(s => counts[s] = 0);
+  leads.forEach(l => counts[l.status]++);
+  
+  const cityCounts = {};
+  leads.forEach(l => cityCounts[l.city] = (cityCounts[l.city]||0) + 1);
+  const topCities = Object.entries(cityCounts).sort((a,b) => b[1]-a[1]).slice(0,8);
+  
+  const maxCount = Math.max(...Object.values(counts), 1);
+  const maxCity = Math.max(...topCities.map(c=>c[1]), 1);
+  
+  // Activity over time
+  const allActivities = [];
+  leads.forEach(l => (l.activities||[]).forEach(a => allActivities.push(a)));
+  
+  const funnelColors = {new:'var(--blue)',contacted:'var(--yellow)',responded:'var(--green)',meeting:'var(--purple)',closed:'#00b894',lost:'var(--red)'};
+  const funnelMax = Math.max(...STATUSES.map(s=>counts[s]),1);
+  
+  document.getElementById('analyticsView').innerHTML = `
+    <div class="chart-card">
+      <h3>🔥 Pipeline Funnel</h3>
+      <div class="funnel">
+        ${STATUSES.map(s => `<div class="funnel-row">
+          <span style="width:80px;font-size:.75rem;color:var(--dim)">${STATUS_LABELS[s].split(' ').slice(1).join(' ')}</span>
+          <div class="funnel-bar" style="width:${Math.max((counts[s]/funnelMax)*100,8)}%;background:${funnelColors[s]}">${counts[s]}</div>
+        </div>`).join('')}
+      </div>
+    </div>
+    <div class="chart-card">
+      <h3>🏙️ Leads by City</h3>
+      <div class="bar-chart" style="align-items:flex-end;padding-bottom:24px">
+        ${topCities.map(([city,count]) => `<div class="bar" style="height:${(count/maxCity)*130}px;background:var(--accent)">
+          <div class="val">${count}</div>
+          <div class="lbl">${city}</div>
+        </div>`).join('')}
+      </div>
+    </div>
+    <div class="chart-card">
+      <h3>⭐ Priority Breakdown</h3>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        ${['HIGH','MEDIUM','LOW'].map(p => {
+          const c = leads.filter(l=>l.priority===p).length;
+          const colors = {HIGH:'var(--red)',MEDIUM:'var(--yellow)',LOW:'var(--dim)'};
+          return `<div class="funnel-row">
+            <span style="width:60px;font-size:.75rem;color:var(--dim)">${p}</span>
+            <div class="funnel-bar" style="width:${Math.max((c/leads.length)*100,8)}%;background:${colors[p]}">${c}</div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+    <div class="chart-card">
+      <h3>📊 Key Metrics</h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div><div style="font-size:1.5rem;font-weight:700;color:var(--green)">${counts.responded+counts.meeting+counts.closed}</div><div style="font-size:.75rem;color:var(--dim)">Warm Leads</div></div>
+        <div><div style="font-size:1.5rem;font-weight:700;color:var(--yellow)">${Math.round((leads.filter(l=>l.activities&&l.activities.length>0).length/leads.length)*100)}%</div><div style="font-size:.75rem;color:var(--dim)">Touch Rate</div></div>
+        <div><div style="font-size:1.5rem;font-weight:700;color:var(--blue)">${(leads.reduce((s,l)=>s+l.score,0)/leads.length).toFixed(1)}</div><div style="font-size:.75rem;color:var(--dim)">Avg Score</div></div>
+        <div><div style="font-size:1.5rem;font-weight:700;color:var(--purple)">${leads.filter(l=>l.followUpDate).length}</div><div style="font-size:.75rem;color:var(--dim)">Scheduled</div></div>
+      </div>
+    </div>
+  `;
+}
+
+// Modal
+function openModal(id) {
+  const l = leads.find(x => x.id === id);
+  if (!l) return;
+  l.activities = l.activities || [];
+  
+  document.getElementById('modal').innerHTML = `
+    <h2>${l.name}</h2>
+    <a class="handle" href="https://instagram.com/${l.handle.replace('@','')}" target="_blank">${l.handle}</a>
+    <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+      <span class="priority ${l.priority}">${l.priority}</span>
+      <span style="font-size:.75rem;color:var(--dim)">📍 ${l.city}</span>
+      <span style="font-size:.75rem;color:var(--dim)">👥 ${l.followers.toLocaleString()}</span>
+      <span style="font-size:.75rem;color:var(--dim)">⭐ ${l.score}/10</span>
+    </div>
+    <div style="background:var(--bg);padding:10px;border-radius:6px;margin-bottom:16px;font-size:.8rem;color:var(--dim)">
+      <strong style="color:var(--text)">Issues:</strong> ${l.issues}
+    </div>
+    <div class="form-group">
+      <label>Status</label>
+      <select id="m_status" onchange="updateLead(${l.id},'status',this.value)">
+        ${STATUSES.map(s => `<option value="${s}" ${l.status===s?'selected':''}>${STATUS_LABELS[s]}</option>`).join('')}
+      </select>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="form-group">
+        <label>Follow-up Date</label>
+        <input type="date" id="m_followup" value="${l.followUpDate||''}" onchange="updateLead(${l.id},'followUpDate',this.value)">
+      </div>
+      <div class="form-group">
+        <label>Deal Value ($)</label>
+        <input type="text" id="m_value" value="${l.dealValue||''}" placeholder="e.g. 2000/mo" onchange="updateLead(${l.id},'dealValue',this.value)">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Notes</label>
+      <textarea id="m_notes" onchange="updateLead(${l.id},'notes',this.value)">${l.notes||''}</textarea>
+    </div>
+    <div class="activity">
+      <h3>📝 Activity Log</h3>
+      ${l.activities.slice().reverse().map(a => `<div class="activity-item"><span class="time">${timeAgo(a.time)}</span><span>${a.text}</span></div>`).join('')}
+      ${l.activities.length===0?'<p style="color:var(--dim);font-size:.8rem">No activity yet</p>':''}
+      <div class="add-activity">
+        <input type="text" id="m_activity" placeholder="Add activity note..." onkeydown="if(event.key==='Enter')addActivity(${l.id})">
+        <button class="btn sm" onclick="addActivity(${l.id})">Add</button>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn outline" onclick="closeModal()">Close</button>
+      <button class="btn green" onclick="quickDM(${l.id})">📤 Mark DM Sent</button>
+    </div>
+  `;
+  document.getElementById('modalBg').classList.add('open');
+}
+
+function closeModal() { document.getElementById('modalBg').classList.remove('open'); }
+
+function updateLead(id, field, value) {
+  const l = leads.find(x => x.id === id);
+  if (l) { l[field] = value; save(); renderAll(); }
+}
+
+function addActivity(id) {
+  const input = document.getElementById('m_activity');
+  const text = input.value.trim();
+  if (!text) return;
+  const l = leads.find(x => x.id === id);
+  if (l) {
+    l.activities = l.activities || [];
+    l.activities.push({time: new Date().toISOString(), text});
+    input.value = '';
+    save(); openModal(id); renderAll();
+  }
+}
+
+function quickDM(id) {
+  const l = leads.find(x => x.id === id);
+  if (l) {
+    if (l.status === 'new') l.status = 'contacted';
+    l.lastContact = new Date().toISOString();
+    l.activities = l.activities || [];
+    l.activities.push({time: new Date().toISOString(), text: '📤 DM sent'});
+    save(); openModal(id); renderAll();
+  }
+}
+
+function timeAgo(iso) {
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff/60000);
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins/60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs/24);
+  return `${days}d ago`;
+}
+
+// Data
+function exportData() {
+  const blob = new Blob([JSON.stringify(leads, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `medspa-crm-backup-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+}
+
+function importData() { document.getElementById('fileInput').click(); }
+function handleImport(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result);
+      if (Array.isArray(data)) { leads = data; save(); renderAll(); alert('Imported ' + data.length + ' leads!'); }
+    } catch(e) { alert('Invalid JSON file'); }
+  };
+  reader.readAsText(file);
+}
+
+// Tabs
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.onclick = () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById(tab.dataset.view).classList.add('active');
+    renderAll();
+  };
+});
+
+// Filters
+document.getElementById('search').oninput = renderAll;
+document.getElementById('filterPriority').onchange = renderAll;
+document.getElementById('filterCity').onchange = renderAll;
+
+function populateCities() {
+  const cities = [...new Set(leads.map(l => l.city))].sort();
+  document.getElementById('filterCity').innerHTML = '<option value="">All Cities</option>' + cities.map(c => `<option>${c}</option>`).join('');
+}
+
+function renderDataStats() {
+  const el = document.getElementById('dataStats');
+  if (el) {
+    const acts = leads.reduce((s,l) => s + (l.activities||[]).length, 0);
+    el.innerHTML = `${leads.length} leads · ${acts} total activities · ${leads.filter(l=>l.notes).length} with notes · Last saved: ${new Date().toLocaleString()}`;
+  }
+}
+
+function renderAll() {
+  renderStats();
+  renderPipeline();
+  renderTable();
+  renderFollowups();
+  renderAnalytics();
+  renderDataStats();
+}
+
+// Init
+initLeads();
+populateCities();
+renderAll();
+
+// Keyboard shortcuts
+document.onkeydown = e => { if (e.key === 'Escape') closeModal(); };
+</script>
+</body>
+</html>
